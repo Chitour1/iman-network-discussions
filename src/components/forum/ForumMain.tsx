@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -63,29 +64,33 @@ const ForumMain = () => {
       
       // Transform data to ensure proper typing
       const transformedData: Topic[] = (data || []).map(item => {
-        // Safe profile extraction
-        const profiles = item.profiles && 
-                        typeof item.profiles === 'object' && 
-                        item.profiles !== null && 
-                        'display_name' in item.profiles && 
-                        'username' in item.profiles
-          ? { 
-              display_name: item.profiles.display_name as string, 
-              username: item.profiles.username as string 
-            }
-          : null;
+        // Safe profile extraction with explicit null check
+        let profiles: { display_name: string; username: string; } | null = null;
+        if (item.profiles && 
+            typeof item.profiles === 'object' && 
+            item.profiles !== null) {
+          const profileObj = item.profiles as any;
+          if ('display_name' in profileObj && 'username' in profileObj) {
+            profiles = {
+              display_name: profileObj.display_name as string,
+              username: profileObj.username as string
+            };
+          }
+        }
 
-        // Safe category extraction
-        const categories = item.categories && 
-                          typeof item.categories === 'object' && 
-                          item.categories !== null && 
-                          'name' in item.categories && 
-                          'color' in item.categories
-          ? { 
-              name: item.categories.name as string, 
-              color: item.categories.color as string 
-            }
-          : null;
+        // Safe category extraction with explicit null check
+        let categories: { name: string; color: string; } | null = null;
+        if (item.categories && 
+            typeof item.categories === 'object' && 
+            item.categories !== null) {
+          const categoryObj = item.categories as any;
+          if ('name' in categoryObj && 'color' in categoryObj) {
+            categories = {
+              name: categoryObj.name as string,
+              color: categoryObj.color as string
+            };
+          }
+        }
 
         return {
           id: item.id,

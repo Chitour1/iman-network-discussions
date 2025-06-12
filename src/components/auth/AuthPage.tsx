@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Mosque, BookOpen, Users } from "lucide-react";
+import { Building, BookOpen, Users } from "lucide-react";
 
 const AuthPage = () => {
   const [email, setEmail] = useState("");
@@ -77,7 +77,7 @@ const AuthPage = () => {
         <div className="text-center md:text-right space-y-6">
           <div className="flex justify-center md:justify-end mb-6">
             <div className="w-20 h-20 bg-gradient-to-br from-green-600 to-blue-600 rounded-full flex items-center justify-center">
-              <Mosque className="w-10 h-10 text-white" />
+              <Building className="w-10 h-10 text-white" />
             </div>
           </div>
           

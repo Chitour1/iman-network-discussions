@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator 
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Bell, Search, Settings, LogOut, User, Mosque } from "lucide-react";
+import { Bell, Search, Settings, LogOut, User, Building } from "lucide-react";
 
 interface ForumHeaderProps {
   session: Session;
@@ -33,7 +33,7 @@ const ForumHeader = ({ session }: ForumHeaderProps) => {
           
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-blue-600 rounded-full flex items-center justify-center">
-              <Mosque className="w-6 h-6 text-white" />
+              <Building className="w-6 h-6 text-white" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-800">شبكة أنا المؤمن</h1>

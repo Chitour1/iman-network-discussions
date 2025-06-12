@@ -30,11 +30,11 @@ interface Topic {
   profiles: {
     display_name: string;
     username: string;
-  };
+  } | null;
   categories: {
     name: string;
     color: string;
-  };
+  } | null;
 }
 
 const ForumMain = () => {
@@ -54,13 +54,13 @@ const ForumMain = () => {
           profiles (display_name, username),
           categories (name, color)
         `)
-        .eq('status', 'approved')
+        .eq('status', 'published')
         .order('is_pinned', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(20);
 
       if (error) throw error;
-      setTopics(data || []);
+      setTopics((data as Topic[]) || []);
     } catch (error) {
       console.error('Error fetching topics:', error);
     } finally {
@@ -137,13 +137,15 @@ const ForumMain = () => {
                         {topic.is_pinned && (
                           <Pin className="w-4 h-4 text-green-600" />
                         )}
-                        <Badge 
-                          variant="secondary" 
-                          className="text-xs"
-                          style={{ backgroundColor: `${topic.categories.color}20`, color: topic.categories.color }}
-                        >
-                          {topic.categories.name}
-                        </Badge>
+                        {topic.categories && (
+                          <Badge 
+                            variant="secondary" 
+                            className="text-xs"
+                            style={{ backgroundColor: `${topic.categories.color}20`, color: topic.categories.color }}
+                          >
+                            {topic.categories.name}
+                          </Badge>
+                        )}
                       </div>
                       
                       <h3 className="text-lg font-semibold text-gray-800 mb-2 hover:text-green-600 cursor-pointer">
@@ -157,7 +159,7 @@ const ForumMain = () => {
                       <div className="flex items-center gap-4 text-sm text-gray-500">
                         <div className="flex items-center gap-1">
                           <User className="w-4 h-4" />
-                          <span>{topic.profiles.display_name}</span>
+                          <span>{topic.profiles?.display_name || "مستخدم مجهول"}</span>
                         </div>
                         
                         <div className="flex items-center gap-1">

@@ -15,6 +15,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 
+// Updated interface to match Supabase response
 interface Topic {
   id: string;
   title: string;
@@ -59,7 +60,28 @@ const ForumMain = () => {
         .limit(20);
 
       if (error) throw error;
-      setTopics(data || []);
+      
+      // Transform data to ensure proper typing
+      const transformedData: Topic[] = (data || []).map(item => ({
+        id: item.id,
+        title: item.title,
+        content: item.content,
+        view_count: item.view_count || 0,
+        reply_count: item.reply_count || 0,
+        like_count: item.like_count || 0,
+        is_pinned: item.is_pinned || false,
+        created_at: item.created_at,
+        author_id: item.author_id,
+        category_id: item.category_id,
+        profiles: item.profiles && typeof item.profiles === 'object' && 'display_name' in item.profiles 
+          ? item.profiles as { display_name: string; username: string; }
+          : null,
+        categories: item.categories && typeof item.categories === 'object' && 'name' in item.categories
+          ? item.categories as { name: string; color: string; }
+          : null
+      }));
+      
+      setTopics(transformedData);
     } catch (error) {
       console.error('Error fetching topics:', error);
     } finally {

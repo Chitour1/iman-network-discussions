@@ -73,10 +73,10 @@ const ForumMain = () => {
         created_at: item.created_at,
         author_id: item.author_id,
         category_id: item.category_id,
-        profiles: item.profiles && typeof item.profiles === 'object' && 'display_name' in item.profiles 
+        profiles: item.profiles && typeof item.profiles === 'object' && item.profiles !== null && 'display_name' in item.profiles 
           ? item.profiles as { display_name: string; username: string; }
           : null,
-        categories: item.categories && typeof item.categories === 'object' && 'name' in item.categories
+        categories: item.categories && typeof item.categories === 'object' && item.categories !== null && 'name' in item.categories
           ? item.categories as { name: string; color: string; }
           : null
       }));

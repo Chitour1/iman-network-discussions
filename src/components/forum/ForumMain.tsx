@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -60,7 +59,7 @@ const ForumMain = () => {
         .limit(20);
 
       if (error) throw error;
-      setTopics((data as Topic[]) || []);
+      setTopics(data || []);
     } catch (error) {
       console.error('Error fetching topics:', error);
     } finally {

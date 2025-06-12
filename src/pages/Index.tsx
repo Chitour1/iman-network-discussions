@@ -1,14 +1,62 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Session } from "@supabase/supabase-js";
+import ForumLayout from "@/components/forum/ForumLayout";
+import AuthPage from "@/components/auth/AuthPage";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setLoading(false);
+        
+        if (event === 'SIGNED_IN') {
+          toast({
+            title: "مرحباً بك",
+            description: "تم تسجيل الدخول بنجاح",
+          });
+        } else if (event === 'SIGNED_OUT') {
+          toast({
+            title: "تم تسجيل الخروج",
+            description: "نراك قريباً إن شاء الله",
+          });
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [toast]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">جاري التحميل...</p>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (!session) {
+    return <AuthPage />;
+  }
+
+  return <ForumLayout session={session} />;
 };
 
 export default Index;

@@ -62,24 +62,46 @@ const ForumMain = () => {
       if (error) throw error;
       
       // Transform data to ensure proper typing
-      const transformedData: Topic[] = (data || []).map(item => ({
-        id: item.id,
-        title: item.title,
-        content: item.content,
-        view_count: item.view_count || 0,
-        reply_count: item.reply_count || 0,
-        like_count: item.like_count || 0,
-        is_pinned: item.is_pinned || false,
-        created_at: item.created_at,
-        author_id: item.author_id,
-        category_id: item.category_id,
-        profiles: item.profiles && typeof item.profiles === 'object' && item.profiles !== null && 'display_name' in item.profiles 
-          ? item.profiles as { display_name: string; username: string; }
-          : null,
-        categories: item.categories && typeof item.categories === 'object' && item.categories !== null && 'name' in item.categories
-          ? item.categories as { name: string; color: string; }
-          : null
-      }));
+      const transformedData: Topic[] = (data || []).map(item => {
+        // Safe profile extraction
+        const profiles = item.profiles && 
+                        typeof item.profiles === 'object' && 
+                        item.profiles !== null && 
+                        'display_name' in item.profiles && 
+                        'username' in item.profiles
+          ? { 
+              display_name: item.profiles.display_name as string, 
+              username: item.profiles.username as string 
+            }
+          : null;
+
+        // Safe category extraction
+        const categories = item.categories && 
+                          typeof item.categories === 'object' && 
+                          item.categories !== null && 
+                          'name' in item.categories && 
+                          'color' in item.categories
+          ? { 
+              name: item.categories.name as string, 
+              color: item.categories.color as string 
+            }
+          : null;
+
+        return {
+          id: item.id,
+          title: item.title,
+          content: item.content,
+          view_count: item.view_count || 0,
+          reply_count: item.reply_count || 0,
+          like_count: item.like_count || 0,
+          is_pinned: item.is_pinned || false,
+          created_at: item.created_at,
+          author_id: item.author_id,
+          category_id: item.category_id,
+          profiles,
+          categories
+        };
+      });
       
       setTopics(transformedData);
     } catch (error) {

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 // Updated interface to match Supabase response
 interface Topic {
@@ -28,6 +29,7 @@ interface Topic {
   created_at: string;
   author_id: string;
   category_id: string;
+  slug: string;
   profiles: {
     display_name: string;
     username: string;
@@ -41,6 +43,7 @@ interface Topic {
 const ForumMain = () => {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchTopics();
@@ -103,6 +106,7 @@ const ForumMain = () => {
           created_at: item.created_at,
           author_id: item.author_id,
           category_id: item.category_id,
+          slug: item.slug,
           profiles,
           categories
         };
@@ -114,6 +118,14 @@ const ForumMain = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCreateTopic = () => {
+    navigate('/create-topic');
+  };
+
+  const handleTopicClick = (slug: string) => {
+    navigate(`/topic/${slug}`);
   };
 
   if (loading) {
@@ -142,7 +154,7 @@ const ForumMain = () => {
             <h1 className="text-2xl font-bold text-gray-800">أحدث المواضيع</h1>
             <p className="text-gray-600">تابع آخر النقاشات والمواضيع في المنتدى</p>
           </div>
-          <Button className="bg-green-600 hover:bg-green-700">
+          <Button onClick={handleCreateTopic} className="bg-green-600 hover:bg-green-700">
             <Plus className="w-4 h-4 ml-2" />
             موضوع جديد
           </Button>
@@ -169,7 +181,7 @@ const ForumMain = () => {
                 <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-600 mb-2">لا توجد مواضيع حالياً</h3>
                 <p className="text-gray-500 mb-4">كن أول من يبدأ النقاش في المنتدى</p>
-                <Button className="bg-green-600 hover:bg-green-700">
+                <Button onClick={handleCreateTopic} className="bg-green-600 hover:bg-green-700">
                   <Plus className="w-4 h-4 ml-2" />
                   أضف موضوع جديد
                 </Button>
@@ -196,7 +208,10 @@ const ForumMain = () => {
                         )}
                       </div>
                       
-                      <h3 className="text-lg font-semibold text-gray-800 mb-2 hover:text-green-600 cursor-pointer">
+                      <h3 
+                        className="text-lg font-semibold text-gray-800 mb-2 hover:text-green-600 cursor-pointer"
+                        onClick={() => handleTopicClick(topic.slug)}
+                      >
                         {topic.title}
                       </h3>
                       

@@ -19,8 +19,27 @@ import {
   TrendingUp,
   Calendar,
   Settings,
-  Shield
+  Shield,
+  Book,
+  Scroll,
+  Scale,
+  Heart,
+  Clock,
+  Megaphone,
+  UserPlus,
+  HelpCircle
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  color: string;
+  icon: string;
+  topic_count: number;
+}
 
 const ForumSidebar = () => {
   const [stats, setStats] = useState({
@@ -29,9 +48,20 @@ const ForumSidebar = () => {
     totalComments: 0,
     todayViews: 0
   });
+  const [categories, setCategories] = useState<Category[]>([]);
+  const navigate = useNavigate();
+
+  const getIconComponent = (iconName: string) => {
+    const icons: { [key: string]: any } = {
+      Home, BookOpen, Book, Scroll, Scale, Heart, Star, Clock, 
+      Megaphone, Users, MessageSquare, UserPlus, HelpCircle, TrendingUp
+    };
+    return icons[iconName] || MessageSquare;
+  };
 
   useEffect(() => {
     fetchStats();
+    fetchCategories();
   }, []);
 
   const fetchStats = async () => {
@@ -54,19 +84,24 @@ const ForumSidebar = () => {
     }
   };
 
-  const menuItems = [
-    { icon: Home, label: "الرئيسية", href: "/" },
-    { icon: BookOpen, label: "العلوم الشرعية", href: "/categories/sharia" },
-    { icon: MessageSquare, label: "النقاش العام", href: "/categories/general" },
-    { icon: Users, label: "التعارف", href: "/categories/introductions" },
-    { icon: Star, label: "المواضيع المميزة", href: "/featured" },
-    { icon: TrendingUp, label: "الأكثر نشاطاً", href: "/trending" },
-  ];
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order');
 
-  const adminItems = [
-    { icon: Shield, label: "لوحة الإدارة", href: "/admin" },
-    { icon: Settings, label: "إعدادات المنتدى", href: "/admin/settings" },
-  ];
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
+
+  const handleCategoryClick = (slug: string) => {
+    navigate(`/category/${slug}`);
+  };
 
   return (
     <Sidebar className="border-l border-gray-200">
@@ -78,14 +113,27 @@ const ForumSidebar = () => {
 
       <SidebarContent>
         <SidebarMenu>
-          {menuItems.map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton>
-                <item.icon className="w-4 h-4" />
-                <span>{item.label}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={() => navigate("/")}>
+              <Home className="w-4 h-4" />
+              <span>الرئيسية</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          {categories.map((category) => {
+            const IconComponent = getIconComponent(category.icon);
+            return (
+              <SidebarMenuItem key={category.id}>
+                <SidebarMenuButton onClick={() => handleCategoryClick(category.slug)}>
+                  <IconComponent className="w-4 h-4" style={{ color: category.color }} />
+                  <span>{category.name}</span>
+                  <span className="mr-auto text-xs text-gray-500">
+                    ({category.topic_count})
+                  </span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
         </SidebarMenu>
 
         <SidebarSeparator />
@@ -151,16 +199,20 @@ const ForumSidebar = () => {
 
         <SidebarSeparator />
 
-        {/* قائمة الإدارة (إذا كان المستخدم أدمن) */}
+        {/* قائمة الإدارة */}
         <SidebarMenu>
-          {adminItems.map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton>
-                <item.icon className="w-4 h-4" />
-                <span>{item.label}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={() => navigate("/admin")}>
+              <Shield className="w-4 h-4" />
+              <span>لوحة الإدارة</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={() => navigate("/admin/settings")}>
+              <Settings className="w-4 h-4" />
+              <span>إعدادات المنتدى</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
     </Sidebar>

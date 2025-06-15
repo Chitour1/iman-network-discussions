@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { MessageCircle, Heart, Users, UserPlus2, UserMinus2 } from "lucide-react";
+import { stripHtml } from "@/utils/textUtils";
 
 // ========== Types ============
 interface FeedTopic {
@@ -103,6 +104,31 @@ function FeedTopicModal({
       </div>
     </div>
   );
+}
+
+function linkify(text: string) {
+  // تعثر على جميع الروابط وتحوّلها إلى <a>
+  const urlRegex = /((https?:\/\/|www\.)[^\s]+)/g;
+  // استخدم split/map لعرض النص + الروابط
+  const parts = text.split(urlRegex);
+  return parts.map((part, i) => {
+    if (urlRegex.test(part)) {
+      let url = part;
+      if (!url.startsWith('http')) url = 'https://' + url;
+      return (
+        <a
+          key={i}
+          href={url}
+          className="text-blue-600 underline break-all"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
 }
 
 export default function Feed() {
@@ -264,7 +290,7 @@ export default function Feed() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(to bottom, #e0edfa 60%, #f8fafc 100%)" }} dir="rtl">
+    <div className="min-h-screen" style={{ background: "#e0edfa" }} dir="rtl">
       <div className="max-w-xl mx-auto py-10">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -345,10 +371,18 @@ export default function Feed() {
                     <div className="font-bold text-xl text-gray-800 mb-2">{topic.title}</div>
                     {/* المحتوى بشكل عادي جدًا بدون أكواد HTML */}
                     <div
-                      className="text-gray-600 mb-2 line-clamp-3"
-                      style={{ whiteSpace: "pre-line", fontFamily: "inherit" }}
+                      className="text-gray-600 mb-2 text-base font-normal"
+                      style={{
+                        whiteSpace: "pre-line",
+                        fontFamily: "inherit",
+                        overflowY: "auto",
+                        maxHeight: "8em",
+                        overflowX: "hidden",
+                        WebkitOverflowScrolling: "touch",
+                        wordBreak: "break-word",
+                      }}
                     >
-                      {topic.content}
+                      {linkify(stripHtml(topic.content))}
                     </div>
                     {/* أزرار التفاعل */}
                     <div className="flex items-center gap-4 mt-3">

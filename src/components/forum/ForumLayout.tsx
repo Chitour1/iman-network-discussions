@@ -6,7 +6,7 @@ import ForumMain from "./ForumMain";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
 interface ForumLayoutProps {
-  session: Session;
+  session: Session | null;
 }
 
 const ForumLayout = ({ session }: ForumLayoutProps) => {

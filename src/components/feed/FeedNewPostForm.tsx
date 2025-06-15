@@ -26,28 +26,24 @@ export default function FeedNewPostForm({ onCreated }: FeedNewPostFormProps) {
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!user) return;
-    setLoading(true);
-
     const pureTitle = cleanText(title);
     const pureContent = cleanText(content);
-
     if (!pureTitle || !pureContent) {
       toast({ title: "العنوان والمحتوى مطلوبان" });
-      setLoading(false);
       return;
     }
-
+    setLoading(true);
+    // slug بسيط: جزء من العنوان + أرقام عشوائية
     const slug = (pureTitle.replace(/\s+/g, "-").slice(0, 24) + "-" + Math.floor(Math.random() * 1e5)).toLowerCase();
     const { error } = await supabase.from("topics").insert({
       title: pureTitle,
       content: pureContent,
-      author_id: user.id, // Ensure it's user.id uuid
-      category_id: "feed-only", // وهمية
+      author_id: user.id,
+      category_id: "feed-only", // فئة وهمية/خاصة للمنصة (يمكن تخصيصها لاحقًا)
       slug,
       status: "published",
       is_feed_only: true
     });
-
     if (error) {
       toast({ title: "خطأ", description: "تعذر نشر المنشور. " + (error.message || "") });
     } else {

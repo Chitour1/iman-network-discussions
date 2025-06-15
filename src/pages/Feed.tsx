@@ -16,8 +16,6 @@ interface FeedTopic {
   reply_count: number;
   slug: string;
   author_id: string;
-  author_name: string;
-  author_avatar: string | null;
 }
 
 type TabType = "foryou" | "following";
@@ -31,38 +29,24 @@ export default function Feed() {
   const [feedLoading, setFeedLoading] = useState(false);
   const navigate = useNavigate();
 
-  // لجلب المواضيع بشكل زمني مشابه لسوشيال ميديا (أحدث أولاً)
+  // جلب المواضيع بشكل زمني تنازلي من كل أقسام المنتدى
   useEffect(() => {
     let running = true;
     async function fetchFeed() {
       setFeedLoading(true);
-      // للأبسط: جلب 20 موضوعاً فقط
       const { data, error } = await supabase
         .from("topics")
-        .select(`id, title, content, created_at, like_count, reply_count, slug, author_id,
-          profiles(display_name, avatar_url)`)
+        .select("id, title, content, created_at, like_count, reply_count, slug, author_id")
         .eq("status", "published")
         .order("created_at", { ascending: false })
         .limit(20);
 
       if (!running) return;
-
       if (error) {
         toast({ title: "خطأ", description: "تعذر جلب المواضيع." });
         setTopics([]);
       } else {
-        setTopics((data || []).map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          content: item.content,
-          created_at: item.created_at,
-          like_count: item.like_count ?? 0,
-          reply_count: item.reply_count ?? 0,
-          slug: item.slug,
-          author_id: item.author_id,
-          author_name: (item.profiles && item.profiles.display_name) ? item.profiles.display_name : "مستخدم",
-          author_avatar: (item.profiles && item.profiles.avatar_url) ? item.profiles.avatar_url : null,
-        })));
+        setTopics(data || []);
       }
       setFeedLoading(false);
       setLoading(false);
@@ -78,10 +62,9 @@ export default function Feed() {
         description: "لا يمكنك التفاعل دون تسجيل الدخول.",
         variant: "destructive",
       });
-      navigate("/"); // أو إلى صفحة الدخول
+      navigate("/");
       return;
     }
-    // إجراء إعجاب فوري (optimistic)
     setLiked(liked => ({ ...liked, [id]: true }));
 
     const { error } = await supabase
@@ -92,7 +75,6 @@ export default function Feed() {
       setLiked(liked => ({ ...liked, [id]: false }));
       toast({ title: "خطأ", description: "تعذر تسجيل الإعجاب." });
     } else {
-      // إظهار نجاح فوري
       setTopics(curr => curr.map(t =>
         t.id === id ? { ...t, like_count: t.like_count + 1 } : t
       ));
@@ -109,11 +91,10 @@ export default function Feed() {
       navigate("/");
       return;
     }
-    // انتقال إلى صفحة النقاش الأصلي وفتح صندوق التعليقات (يمكن تخصيصه لاحقًا)
     navigate(`/topic/${topicId}#reply`);
   };
 
-  // Filtering for "تتابعه" (following): فقط مواضيع من متابعين (محفوظين محلياً مثلاً أو في جدول المتابعة (ينفذ لاحقًا))
+  // Filtering for "تتابعه" (following): فقط مواضيع من متابعين محفوظين محلياً أو في جدول المتابعة (ينفذ لاحقًا)
   const followedAuthors = useMemo(() => {
     if (!user || !window?.localStorage) return [];
     try {
@@ -170,13 +151,10 @@ export default function Feed() {
             <div className="space-y-6">
               {filteredTopics.map(topic => (
                 <div key={topic.id} className="bg-white shadow rounded-lg px-5 py-4 relative">
-                  {/* الكاتب + صورة رمزية بسيطة */}
+                  {/* الكاتب */}
                   <div className="flex items-center gap-3 mb-2">
-                    {topic.author_avatar ?
-                      <img src={topic.author_avatar} alt={topic.author_name} className="w-8 h-8 rounded-full" /> :
-                      <div className="w-8 h-8 bg-pink-200 rounded-full flex items-center justify-center text-sm text-pink-700">{topic.author_name[0]}</div>
-                    }
-                    <span className="font-semibold text-pink-700">{topic.author_name}</span>
+                    <div className="w-8 h-8 bg-pink-200 rounded-full flex items-center justify-center text-sm text-pink-700">م</div>
+                    <span className="font-semibold text-pink-700">مستخدم</span>
                     <span className="text-xs text-gray-400 ml-2">{new Date(topic.created_at).toLocaleDateString()}</span>
                   </div>
                   {/* العنوان */}

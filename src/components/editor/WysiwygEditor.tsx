@@ -153,7 +153,7 @@ const WysiwygEditor = ({
         }
         tableHtml += '</table>';
         
-        const delta = quill.clipboard.convert(tableHtml);
+        const delta = quill.clipboard.convert({ html: tableHtml });
         quill.updateContents(delta, 'user');
       }
     }

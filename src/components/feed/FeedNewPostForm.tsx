@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,16 +17,17 @@ export default function FeedNewPostForm({ onCreated }: FeedNewPostFormProps) {
   const [loading, setLoading] = useState(false);
 
   function cleanText(val: string) {
-    // أزل أكواد HTML وفصّل الأسطر المكررة، وأزل المسافات الزائدة
     let txt = val.replace(/<br\s*\/?>/gi, "\n").replace(/\r\n|\r|\n/g, "\n");
-    txt = txt.replace(/^[\s\n\r]+|[\s\n\r]+$/g, ""); // from start/end
-    // strip html tags to ensure it's just plain text
+    txt = txt.replace(/^[\s\n\r]+|[\s\n\r]+$/g, "");
     return stripHtml ? stripHtml(txt) : txt;
   }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!user) return;
+    if (!user) {
+      toast({ title: "يرجى تسجيل الدخول" });
+      return;
+    }
     setLoading(true);
 
     const pureTitle = cleanText(title);
@@ -37,24 +39,46 @@ export default function FeedNewPostForm({ onCreated }: FeedNewPostFormProps) {
       return;
     }
 
-    const slug = (pureTitle.replace(/\s+/g, "-").slice(0, 24) + "-" + Math.floor(Math.random() * 1e5)).toLowerCase();
-    const { error } = await supabase.from("topics").insert({
+    // توضيح القيم المرسلة
+    console.log("Creating feed post", {
       title: pureTitle,
       content: pureContent,
-      author_id: user.id, // Ensure it's user.id uuid
-      category_id: "feed-only", // وهمية
-      slug,
-      status: "published",
-      is_feed_only: true
+      user_id: user.id,
     });
 
-    if (error) {
-      toast({ title: "خطأ", description: "تعذر نشر المنشور. " + (error.message || "") });
-    } else {
-      toast({ title: "تم نشر منشورك في منصة الساحة فقط" });
-      setTitle("");
-      setContent("");
-      onCreated();
+    try {
+      const slug = (pureTitle.replace(/\s+/g, "-").slice(0, 24) + "-" + Math.floor(Math.random() * 1e5)).toLowerCase();
+      const { error } = await supabase.from("topics").insert({
+        title: pureTitle,
+        content: pureContent,
+        author_id: user.id,
+        category_id: "feed-only", // key وهمي للمنصة فقط
+        slug,
+        status: "published",
+        is_feed_only: true,
+      });
+
+      if (error) {
+        console.error("Feed post error", error);
+        toast({
+          title: "خطأ في النشر",
+          description: error.message || "تعذر نشر المنشور. قد تكون هناك مشكلة اتصال أو نقص في الصلاحيات.",
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "تم نشر منشورك في منصة الساحة فقط" });
+        setTitle("");
+        setContent("");
+        if (onCreated) onCreated();
+      }
+    } catch (err) {
+      // التقاط أي خطأ غير متوقع
+      console.error("Feed post exception", err);
+      toast({
+        title: "خطأ داخلي غير متوقع",
+        description: (err as Error).message || "حدثت مشكلة غير معروفة أثناء النشر.",
+        variant: "destructive",
+      });
     }
     setLoading(false);
   }

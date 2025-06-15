@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -5,8 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Building, BookOpen, Users } from "lucide-react";
-const AuthPage = () => {
+import { Building, BookOpen, Users, Eye } from "lucide-react";
+
+interface AuthPageProps {
+  onGuestBrowse: () => void;
+}
+
+const AuthPage = ({ onGuestBrowse }: AuthPageProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
@@ -107,7 +113,7 @@ const AuthPage = () => {
                 <TabsTrigger value="signup">حساب جديد</TabsTrigger>
               </TabsList>
               
-              <TabsContent value="signin" className="space-y-4">
+              <TabsContent value="signin" className="space-y-4 pt-4">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div>
                     <Input type="email" placeholder="البريد الإلكتروني" value={email} onChange={e => setEmail(e.target.value)} required dir="ltr" />
@@ -119,6 +125,20 @@ const AuthPage = () => {
                     {loading ? "جاري الدخول..." : "دخول"}
                   </Button>
                 </form>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">
+                      أو
+                    </span>
+                  </div>
+                </div>
+                <Button variant="outline" className="w-full" onClick={onGuestBrowse}>
+                  <Eye className="ml-2 h-4 w-4" />
+                  تصفح كزائر
+                </Button>
               </TabsContent>
               
               <TabsContent value="signup" className="space-y-4">

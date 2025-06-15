@@ -9,7 +9,12 @@ import { useToast } from "@/hooks/use-toast";
 const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState(false);
   const { toast } = useToast();
+
+  const enterGuestMode = () => {
+    setIsGuest(true);
+  };
 
   useEffect(() => {
     // Get initial session
@@ -25,6 +30,7 @@ const Index = () => {
         setLoading(false);
         
         if (event === 'SIGNED_IN') {
+          setIsGuest(false); // Exit guest mode on sign in
           toast({
             title: "مرحباً بك",
             description: "تم تسجيل الدخول بنجاح",
@@ -51,12 +57,16 @@ const Index = () => {
       </div>
     );
   }
-
-  if (!session) {
-    return <AuthPage />;
+  
+  if (session) {
+    return <ForumLayout session={session} />;
   }
 
-  return <ForumLayout session={session} />;
+  if (isGuest) {
+    return <ForumLayout session={null} />;
+  }
+
+  return <AuthPage onGuestBrowse={enterGuestMode} />;
 };
 
 export default Index;

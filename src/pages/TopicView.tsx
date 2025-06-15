@@ -34,6 +34,7 @@ interface Topic {
   author_avatar: string | null;
   author_bio: string | null;
   author_signature: string | null;
+  category_id: string; // <-- add this
   category_name: string;
   category_color: string;
 }
@@ -110,6 +111,7 @@ const TopicView = () => {
         like_count: topicData.like_count || 0,
         created_at: topicData.created_at,
         author_id: topicData.author_id,
+        category_id: topicData.category_id, // <-- add this
         author_name: authorResult.data?.display_name || "مستخدم مجهول",
         author_avatar: authorResult.data?.avatar_url || null,
         author_bio: authorResult.data?.bio || null,

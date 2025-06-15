@@ -7,6 +7,9 @@ import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 import { stripHtml } from "@/utils/textUtils";
 
+// ✨ ضع هنا uuid تصنيف المنصة الخاص بك:
+const FEED_CATEGORY_ID = "PUT_YOUR_FEED_CATEGORY_UUID_HERE"; // <-- قم باستبداله لاحقًا بالمعرف الصحيح
+
 interface FeedNewPostFormProps {
   onCreated: () => void
 }
@@ -39,11 +42,12 @@ export default function FeedNewPostForm({ onCreated }: FeedNewPostFormProps) {
       return;
     }
 
-    // توضيح القيم المرسلة
+    // وضّح القيم المرسلة (للتنقيح)
     console.log("Creating feed post", {
       title: pureTitle,
       content: pureContent,
-      user_id: user.id,
+      author_id: user.id,
+      category_id: FEED_CATEGORY_ID,
     });
 
     try {
@@ -52,7 +56,7 @@ export default function FeedNewPostForm({ onCreated }: FeedNewPostFormProps) {
         title: pureTitle,
         content: pureContent,
         author_id: user.id,
-        category_id: "feed-only", // key وهمي للمنصة فقط
+        category_id: FEED_CATEGORY_ID,
         slug,
         status: "published",
         is_feed_only: true,

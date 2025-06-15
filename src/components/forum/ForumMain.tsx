@@ -28,7 +28,7 @@ const ForumMain = () => {
     fetchTopics();
     fetchLatestTopics();
     fetchStats();
-    fetchCategories();
+    fetchCategoriesWithStats();
     fetchTopMembers();
     fetchLatestMember();
   }, []);
@@ -225,14 +225,13 @@ const ForumMain = () => {
     }
   };
 
-  const fetchCategories = async () => {
+  // دالة جديدة لجلب الأقسام مع الإحصائيات الحقيقية من Supabase
+  const fetchCategoriesWithStats = async () => {
     try {
-      const {
-        data,
-        error
-      } = await supabase.from('categories').select('*').eq('is_active', true).order('sort_order');
+      const { data, error } = await supabase.rpc("get_categories_with_stats");
       if (error) throw error;
 
+      // تحويل البيانات مباشرة للـ type المطلوب
       const transformedData: Category[] = (data || []).map(cat => ({
         id: cat.id,
         name: cat.name,
@@ -240,15 +239,15 @@ const ForumMain = () => {
         description: cat.description || '',
         color: cat.color || '#3B82F6',
         icon: cat.icon || 'MessageSquare',
-        topic_count: cat.topic_count || 0,
-        comment_count: cat.post_count || 0,
-        view_count: cat.view_count || 0,
-        recent_topics_count: 0, // This data is not in the database yet
+        topic_count: Number(cat.topic_count) || 0,
+        comment_count: Number(cat.comment_count) || 0,
+        view_count: Number(cat.view_count) || 0,
+        recent_topics_count: Number(cat.recent_topics_count) || 0,
       }));
 
       setCategories(transformedData);
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error('Error fetching category stats:', error);
     }
   };
 

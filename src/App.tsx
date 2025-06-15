@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
-import Header from "@/components/layout/Header";
+// import Header from "@/components/layout/Header"; // Removed Header
 import Index from "./pages/Index";
 import CreateTopic from "./pages/CreateTopic";
 import TopicView from "./pages/TopicView";
@@ -24,7 +24,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <div className="min-h-screen bg-gray-50">
-            <Header />
+            {/* <Header /> */} {/* Removed Header */}
             <main>
               <Routes>
                 <Route path="/" element={<Index />} />

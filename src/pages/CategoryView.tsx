@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +8,8 @@ import { ArrowLeft, Plus, MessageSquare, Eye, ThumbsUp, Clock, User, Pin } from 
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 import { getContentPreview } from "@/utils/textUtils";
+import ForumLayout from "@/components/forum/ForumLayout";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Category {
   id: string;
@@ -36,7 +37,8 @@ const CategoryView = () => {
   const navigate = useNavigate();
   const [category, setCategory] = useState<Category | null>(null);
   const [topics, setTopics] = useState<Topic[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingData, setLoadingData] = useState(true);
+  const { session, loading: authLoading } = useAuth();
 
   useEffect(() => {
     if (slug) {
@@ -113,7 +115,7 @@ const CategoryView = () => {
     } catch (error) {
       console.error('Error fetching topics:', error);
     } finally {
-      setLoading(false);
+      setLoadingData(false);
     }
   };
 
@@ -125,34 +127,16 @@ const CategoryView = () => {
     navigate(`/topic/${topicSlug}`);
   };
 
-  if (loading) {
+  if (authLoading || loadingData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50 p-6" dir="rtl">
-        <div className="max-w-4xl mx-auto">
-          <div className="animate-pulse space-y-4">
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <div className="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!category) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50 p-6" dir="rtl">
-        <div className="max-w-4xl mx-auto text-center py-12">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">القسم غير موجود</h2>
-          <Button onClick={() => navigate('/')}>العودة للرئيسية</Button>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50 p-6 flex items-center justify-center" dir="rtl">
+        <div className="animate-pulse">جاري التحميل...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50 p-6" dir="rtl">
+    <ForumLayout session={session}>
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -184,94 +168,103 @@ const CategoryView = () => {
             </div>
           </CardHeader>
         </Card>
+        
+        {!category && !loadingData && (
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">القسم غير موجود</h2>
+            <Button onClick={() => navigate('/')}>العودة للرئيسية</Button>
+          </div>
+        )}
 
         {/* Topics List */}
-        <div className="space-y-4">
-          {topics.length === 0 ? (
-            <Card className="text-center py-12">
-              <CardContent>
-                <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-600 mb-2">لا توجد مواضيع في هذا القسم</h3>
-                <p className="text-gray-500 mb-4">كن أول من يبدأ النقاش في هذا القسم</p>
-                <Button onClick={handleCreateTopic} className="bg-green-600 hover:bg-green-700">
-                  <Plus className="w-4 h-4 ml-2" />
-                  أضف موضوع جديد
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            topics.map((topic) => (
-              <Card key={topic.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        {topic.is_pinned && (
-                          <Pin className="w-4 h-4 text-green-600" />
-                        )}
-                        {topic.is_pinned && (
-                          <Badge 
-                            variant="secondary"
-                            style={{ backgroundColor: `${category?.color}20`, color: category?.color }}
-                          >
-                            مثبت
-                          </Badge>
-                        )}
+        {category && (
+          <div className="space-y-4">
+            {topics.length === 0 ? (
+              <Card className="text-center py-12">
+                <CardContent>
+                  <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-600 mb-2">لا توجد مواضيع في هذا القسم</h3>
+                  <p className="text-gray-500 mb-4">كن أول من يبدأ النقاش في هذا القسم</p>
+                  <Button onClick={handleCreateTopic} className="bg-green-600 hover:bg-green-700">
+                    <Plus className="w-4 h-4 ml-2" />
+                    أضف موضوع جديد
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              topics.map((topic) => (
+                <Card key={topic.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          {topic.is_pinned && (
+                            <Pin className="w-4 h-4 text-green-600" />
+                          )}
+                          {topic.is_pinned && (
+                            <Badge 
+                              variant="secondary"
+                              style={{ backgroundColor: `${category?.color}20`, color: category?.color }}
+                            >
+                              مثبت
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        <h3 
+                          className="text-lg font-semibold text-gray-800 mb-2 hover:text-green-600 cursor-pointer"
+                          onClick={() => handleTopicClick(topic.slug)}
+                        >
+                          {topic.title}
+                        </h3>
+                        
+                        <p className="text-gray-600 mb-3 line-clamp-2">
+                          {getContentPreview(topic.content, 150)}
+                        </p>
+                        
+                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <div className="flex items-center gap-1">
+                            <User className="w-4 h-4" />
+                            <span>{topic.author_name}</span>
+                          </div>
+                          
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            <span>
+                              {formatDistanceToNow(new Date(topic.created_at), {
+                                addSuffix: true,
+                                locale: ar
+                              })}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                       
-                      <h3 
-                        className="text-lg font-semibold text-gray-800 mb-2 hover:text-green-600 cursor-pointer"
-                        onClick={() => handleTopicClick(topic.slug)}
-                      >
-                        {topic.title}
-                      </h3>
-                      
-                      <p className="text-gray-600 mb-3 line-clamp-2">
-                        {getContentPreview(topic.content, 150)}
-                      </p>
-                      
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <div className="flex flex-col items-center gap-2 text-sm text-gray-500">
                         <div className="flex items-center gap-1">
-                          <User className="w-4 h-4" />
-                          <span>{topic.author_name}</span>
+                          <Eye className="w-4 h-4" />
+                          <span>{topic.view_count}</span>
                         </div>
                         
                         <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          <span>
-                            {formatDistanceToNow(new Date(topic.created_at), {
-                              addSuffix: true,
-                              locale: ar
-                            })}
-                          </span>
+                          <MessageSquare className="w-4 h-4" />
+                          <span>{topic.reply_count}</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-1">
+                          <ThumbsUp className="w-4 h-4" />
+                          <span>{topic.like_count}</span>
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="flex flex-col items-center gap-2 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Eye className="w-4 h-4" />
-                        <span>{topic.view_count}</span>
-                      </div>
-                      
-                      <div className="flex items-center gap-1">
-                        <MessageSquare className="w-4 h-4" />
-                        <span>{topic.reply_count}</span>
-                      </div>
-                      
-                      <div className="flex items-center gap-1">
-                        <ThumbsUp className="w-4 h-4" />
-                        <span>{topic.like_count}</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        )}
       </div>
-    </div>
+    </ForumLayout>
   );
 };
 

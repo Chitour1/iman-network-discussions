@@ -7,18 +7,20 @@ import { useAuth } from "@/hooks/useAuth";
 import AuthModal from "@/components/auth/AuthModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogIn } from "lucide-react";
+import ForumLayout from "@/components/forum/ForumLayout";
 
 interface Category {
   id: string;
   name: string;
+  slug: string;
 }
 
 const CreateTopic = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchParams] = useSearchParams();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const categorySlug = searchParams.get('category');
-  const { user, loading } = useAuth();
+  const categoryId = searchParams.get('category');
+  const { user, session, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,10 +41,6 @@ const CreateTopic = () => {
       console.error('Error fetching categories:', error);
     }
   };
-
-  const selectedCategoryId = categorySlug 
-    ? categories.find(cat => cat.name === categorySlug)?.id 
-    : undefined;
 
   if (loading) {
     return (
@@ -92,12 +90,14 @@ const CreateTopic = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50" dir="rtl">
-      <CreateTopicForm 
-        categories={categories} 
-        selectedCategoryId={selectedCategoryId}
-      />
-    </div>
+    <ForumLayout session={session}>
+      <div className="max-w-4xl mx-auto">
+        <CreateTopicForm 
+          categories={categories} 
+          selectedCategoryId={categoryId || undefined}
+        />
+      </div>
+    </ForumLayout>
   );
 };
 

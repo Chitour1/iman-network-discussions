@@ -10,6 +10,8 @@ import { User, Mail, Calendar, MessageSquare, Eye, Settings, Save } from "lucide
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
+import { useAuth } from "@/hooks/useAuth";
+import ForumLayout from "@/components/forum/ForumLayout";
 
 interface UserProfile {
   id: string;
@@ -40,9 +42,10 @@ const Profile = () => {
   const [editing, setEditing] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loadingData, setLoadingData] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+  const { session, loading: authLoading } = useAuth();
 
   useEffect(() => {
     fetchProfile();
@@ -143,7 +146,7 @@ const Profile = () => {
     } catch (error) {
       console.error('Error fetching user topics:', error);
     } finally {
-      setLoading(false);
+      setLoadingData(false);
     }
   };
 
@@ -181,9 +184,9 @@ const Profile = () => {
     }
   };
 
-  if (loading) {
+  if (authLoading || loadingData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50 p-6" dir="rtl">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50 p-6 flex items-center justify-center" dir="rtl">
         <div className="max-w-4xl mx-auto">
           <div className="animate-pulse space-y-4">
             <div className="bg-white rounded-lg p-6 shadow-sm h-48"></div>
@@ -195,16 +198,16 @@ const Profile = () => {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50 p-6" dir="rtl">
+      <ForumLayout session={session}>
         <div className="max-w-4xl mx-auto text-center py-12">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">خطأ في تحميل الملف الشخصي</h2>
         </div>
-      </div>
+      </ForumLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50 p-6" dir="rtl">
+    <ForumLayout session={session}>
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Profile Card */}
         <Card className="shadow-lg">
@@ -364,7 +367,7 @@ const Profile = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </ForumLayout>
   );
 };
 

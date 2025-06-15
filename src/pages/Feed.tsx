@@ -73,7 +73,11 @@ function FeedTopicModal({
       <div
         ref={modalRef}
         className="bg-white rounded-lg p-6 max-w-lg w-full relative shadow-lg"
-        style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}
+        style={{
+          maxHeight: "90vh",
+          display: "flex",
+          flexDirection: "column",
+        }}
       >
         <button
           aria-label="إغلاق"
@@ -89,12 +93,18 @@ function FeedTopicModal({
           </span>
           <span className="text-xs text-gray-400 ml-2">{new Date(topic.created_at).toLocaleDateString()}</span>
         </div>
-        {/* نص التغريدة بشكل عادي مع تمرير */}
         <div
-          className="text-gray-700 mb-4 overflow-auto"
-          style={{ maxHeight: "45vh", whiteSpace: "pre-line", fontFamily: "inherit" }}
+          className="text-gray-700 mb-4 overflow-y-auto"
+          style={{
+            maxHeight: "45vh",
+            fontFamily: "inherit",
+            whiteSpace: "pre-line",
+            wordBreak: "break-word",
+            OverflowX: "hidden",
+            overflowX: "hidden",
+          }}
         >
-          {topic.content}
+          {renderPlainTextWithShortLinks(topic.content)}
         </div>
         <div className="flex gap-2 items-center mt-auto">
           <Button variant="secondary" onClick={goToFullView}>
@@ -106,29 +116,58 @@ function FeedTopicModal({
   );
 }
 
-function linkify(text: string) {
-  // تعثر على جميع الروابط وتحوّلها إلى <a>
+// ========== مساعد: تصفية النص وجعله عادي بشكل كامل ==========
+function renderPlainTextWithShortLinks(text: string) {
+  // تنظيف النص من أي أكواد HTML
+  const clean = stripHtml(text);
+
+  // regex للروابط
   const urlRegex = /((https?:\/\/|www\.)[^\s]+)/g;
-  // استخدم split/map لعرض النص + الروابط
-  const parts = text.split(urlRegex);
-  return parts.map((part, i) => {
-    if (urlRegex.test(part)) {
-      let url = part;
-      if (!url.startsWith('http')) url = 'https://' + url;
-      return (
-        <a
-          key={i}
-          href={url}
-          className="text-blue-600 underline break-all"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {part}
-        </a>
-      );
+  const maxUrlLen = 28;
+
+  // تقسيم النص وعرض الروابط مختصرة مع إمكانية الضغط
+  const parts = [];
+  let lastIdx = 0;
+  let match: RegExpExecArray | null;
+  let idx = 0;
+
+  while ((match = urlRegex.exec(clean))) {
+    const [url] = match;
+    const start = match.index;
+    const end = start + url.length;
+
+    // أضف ما قبل الرابط
+    if (start > lastIdx) {
+      parts.push(clean.slice(lastIdx, start));
     }
-    return part;
-  });
+    // الرابط نفسه (مختصر ومع ... مع فتحه عند الضغط)
+    let show = url;
+    if (show.length > maxUrlLen) {
+      show = show.slice(0, maxUrlLen - 1) + "…";
+    }
+    let realUrl = url;
+    if (!realUrl.startsWith("http")) realUrl = "https://" + realUrl;
+
+    parts.push(
+      <a
+        key={"link" + idx}
+        href={realUrl}
+        className="text-blue-600 underline break-all"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {show}
+      </a>
+    );
+    idx++;
+    lastIdx = end;
+  }
+  // أضف النهاية (بعد آخر رابط)
+  if (lastIdx < clean.length) {
+    parts.push(clean.slice(lastIdx));
+  }
+
+  return parts;
 }
 
 export default function Feed() {
@@ -292,7 +331,7 @@ export default function Feed() {
   return (
     <div className="min-h-screen" style={{ background: "#e0edfa" }} dir="rtl">
       <div className="max-w-xl mx-auto py-10">
-        {/* Header */}
+        {/* Header, Tabs */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-pink-700 flex items-center gap-2">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#be185d" strokeWidth="2"/><path d="M9 12c1.5 2 4.5 2 6 0M12 9v6" stroke="#be185d" strokeWidth="2" strokeLinecap="round"/></svg>
@@ -369,20 +408,18 @@ export default function Feed() {
                     </div>
                     {/* العنوان */}
                     <div className="font-bold text-xl text-gray-800 mb-2">{topic.title}</div>
-                    {/* المحتوى بشكل عادي جدًا بدون أكواد HTML */}
+                    {/* محتوى النص: راسي فقط, لا تمرير أفقي, نص عادي, الروابط مختصره */}
                     <div
-                      className="text-gray-600 mb-2 text-base font-normal"
+                      className="text-gray-600 mb-2 text-base font-normal overflow-y-auto"
                       style={{
                         whiteSpace: "pre-line",
                         fontFamily: "inherit",
-                        overflowY: "auto",
                         maxHeight: "8em",
-                        overflowX: "hidden",
-                        WebkitOverflowScrolling: "touch",
                         wordBreak: "break-word",
+                        overflowX: "hidden",
                       }}
                     >
-                      {linkify(stripHtml(topic.content))}
+                      {renderPlainTextWithShortLinks(topic.content)}
                     </div>
                     {/* أزرار التفاعل */}
                     <div className="flex items-center gap-4 mt-3">

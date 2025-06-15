@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import ForumLayout from "@/components/forum/ForumLayout";
 import AuthPage from "@/components/auth/AuthPage";
 import { useToast } from "@/hooks/use-toast";
+import ForumMain from "@/components/forum/ForumMain";
 
 const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -58,12 +58,14 @@ const Index = () => {
     );
   }
   
-  if (session) {
-    return <ForumLayout session={session} />;
-  }
-
-  if (isGuest) {
-    return <ForumLayout session={null} />;
+  if (session || isGuest) {
+    return (
+      <ForumLayout session={session}>
+        {/* هنا يُمكن وضع بقية عناصر المنتدى الرئيسية كالمنتديات أو المواضيع الأحدث */}
+        {/* سيتم وضع ForumMain بداخل التخطيط */}
+        <ForumMain />
+      </ForumLayout>
+    );
   }
 
   return <AuthPage onGuestBrowse={enterGuestMode} />;

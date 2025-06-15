@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -292,6 +291,10 @@ const ForumMain = () => {
     navigate(`/topic/${slug}`);
   };
 
+  const handleNavigateToFeed = () => {
+    navigate("/feed");
+  };
+
   if (loading) {
     return <main className="flex-1 p-6">
         <div className="max-w-4xl mx-auto">
@@ -309,8 +312,16 @@ const ForumMain = () => {
 
         {/* Header */}
         <div className="flex justify-between items-center">
-          <div>
-          </div>
+          {/* زر منصة الساحة كأيقونة بارزة */}
+          <button
+            onClick={handleNavigateToFeed}
+            className="flex items-center gap-3 bg-pink-700 hover:bg-pink-800 text-white font-bold px-4 py-2 rounded-lg shadow transition-all text-lg"
+            aria-label="تصفح منتدى الساحة كمنصة تواصل اجتماعي"
+          >
+            {/* أيقونة بسيطة ثريدز/تواصل */}
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="white" strokeWidth="2"/><path d="M9 12c1.5 2 4.5 2 6 0M12 9v6" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
+            <span>منصة الساحة</span>
+          </button>
           <Button onClick={handleCreateTopic} className="bg-green-600 hover:bg-green-700">
             <Plus className="w-4 h-4 ml-2" />
             موضوع جديد

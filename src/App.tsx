@@ -1,11 +1,10 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
-// import Header from "@/components/layout/Header"; // Removed Header
+import Feed from "./pages/Feed";
 import Index from "./pages/Index";
 import CreateTopic from "./pages/CreateTopic";
 import TopicView from "./pages/TopicView";
@@ -25,10 +24,10 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <div className="min-h-screen bg-gray-50">
-            {/* <Header /> */} {/* Removed Header */}
             <main>
               <Routes>
                 <Route path="/" element={<Index />} />
+                <Route path="/feed" element={<Feed />} />
                 <Route path="/create-topic" element={<CreateTopic />} />
                 <Route path="/topic/:slug" element={<TopicView />} />
                 <Route path="/category/:slug" element={<CategoryView />} />

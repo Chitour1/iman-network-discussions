@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,7 +6,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, ThumbsUp, MessageSquare, Eye, Clock, User } from "lucide-react";
+import { ArrowLeft, ThumbsUp, MessageSquare, Eye, Clock, User, Plus, Minus } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -51,6 +52,10 @@ const TopicView = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [contentFontSize, setContentFontSize] = useState<number>(() => {
+    const savedSize = localStorage.getItem('forum-font-size');
+    return savedSize ? parseInt(savedSize, 10) : 18; // text-lg is 18px
+  });
 
   useEffect(() => {
     if (slug) {
@@ -230,6 +235,13 @@ const TopicView = () => {
     setShowPreview(!showPreview);
   };
 
+  const handleFontSizeChange = (newSize: number) => {
+    // Clamp font size between 12px and 32px for readability
+    const clampedSize = Math.max(12, Math.min(32, newSize));
+    setContentFontSize(clampedSize);
+    localStorage.setItem('forum-font-size', clampedSize.toString());
+  };
+
   const canEdit = () => {
     if (!topic || !user) return false;
     if (user.id !== topic.author_id) return false;
@@ -293,11 +305,20 @@ const TopicView = () => {
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50 p-6" dir="rtl">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center justify-between gap-4 mb-6">
           <Button variant="ghost" onClick={() => navigate('/')}>
             <ArrowLeft className="w-4 h-4 ml-2" />
             العودة
           </Button>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">حجم الخط:</span>
+            <Button variant="outline" size="icon" className="w-8 h-8" onClick={() => handleFontSizeChange(contentFontSize + 1)}>
+              <Plus className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" size="icon" className="w-8 h-8" onClick={() => handleFontSizeChange(contentFontSize - 1)}>
+              <Minus className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Topic */}
@@ -344,7 +365,7 @@ const TopicView = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="prose max-w-none">
+            <div className="prose max-w-none" style={{ fontSize: `${contentFontSize}px` }}>
               <div 
                 className="text-gray-700 leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: topic?.content || '' }}
@@ -407,6 +428,7 @@ const TopicView = () => {
                       className="text-gray-700"
                       dangerouslySetInnerHTML={{ __html: reply.content }}
                       dir="rtl"
+                      style={{ fontSize: `${contentFontSize}px` }}
                     />
                     
                     {/* Reply Author Signature */}

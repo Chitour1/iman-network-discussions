@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { MessageCircle, Heart, Users } from "lucide-react";
+import { MessageCircle, Heart, Users, UserPlus2, UserMinus2 } from "lucide-react";
 
 interface FeedTopic {
   id: string;
@@ -20,6 +20,20 @@ interface FeedTopic {
 
 type TabType = "foryou" | "following";
 
+// دوال مساعدة لإدارة المتابعة محليًا
+function getFollowingList(userId: string): string[] {
+  try {
+    const data = localStorage.getItem(`following_${userId}`);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+function setFollowingList(userId: string, following: string[]) {
+  localStorage.setItem(`following_${userId}`, JSON.stringify(following));
+}
+
 export default function Feed() {
   const [topics, setTopics] = useState<FeedTopic[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +41,15 @@ export default function Feed() {
   const { user, loading: authLoading } = useAuth();
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [feedLoading, setFeedLoading] = useState(false);
+  const [following, setFollowing] = useState<string[]>([]);
   const navigate = useNavigate();
+
+  // جلب قائمة المتابعين من LocalStorage
+  useEffect(() => {
+    if (user) {
+      setFollowing(getFollowingList(user.id));
+    }
+  }, [user, authLoading]);
 
   // جلب المواضيع بشكل زمني تنازلي من كل أقسام المنتدى
   useEffect(() => {
@@ -42,6 +64,7 @@ export default function Feed() {
         .limit(20);
 
       if (!running) return;
+
       if (error) {
         toast({ title: "خطأ", description: "تعذر جلب المواضيع." });
         setTopics([]);
@@ -94,17 +117,39 @@ export default function Feed() {
     navigate(`/topic/${topicId}#reply`);
   };
 
-  // Filtering for "تتابعه" (following): فقط مواضيع من متابعين محفوظين محلياً أو في جدول المتابعة (ينفذ لاحقًا)
-  const followedAuthors = useMemo(() => {
-    if (!user || !window?.localStorage) return [];
-    try {
-      const data = localStorage.getItem(`following_${user.id}`);
-      if (!data) return [];
-      return JSON.parse(data);
-    } catch {
-      return [];
+  // إدارة زر المتابعة
+  const handleFollow = (authorId: string) => {
+    if (!user) {
+      toast({
+        title: "يرجى تسجيل الدخول",
+        description: "ميزة المتابعة متاحة للأعضاء فقط.",
+        variant: "destructive",
+      });
+      navigate("/");
+      return;
     }
-  }, [user]);
+    if (authorId === user.id) {
+      toast({ title: "لا يمكنك متابعة نفسك" });
+      return;
+    }
+    if (following.includes(authorId)) {
+      const updated = following.filter(id => id !== authorId);
+      setFollowing(updated);
+      setFollowingList(user.id, updated);
+      toast({ title: "تم إلغاء المتابعة لهذا العضو." });
+    } else {
+      const updated = [...following, authorId];
+      setFollowing(updated);
+      setFollowingList(user.id, updated);
+      toast({ title: "تمت متابعة العضو بنجاح!" });
+    }
+  };
+
+  // قائمة المتابعين لحساب التبويب "تتابعه"
+  const followedAuthors = useMemo(() => {
+    if (!user) return [];
+    return following;
+  }, [user, following]);
 
   const filteredTopics = activeTab === "foryou"
     ? topics
@@ -155,6 +200,27 @@ export default function Feed() {
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-8 h-8 bg-pink-200 rounded-full flex items-center justify-center text-sm text-pink-700">م</div>
                     <span className="font-semibold text-pink-700">مستخدم</span>
+                    {/* زر المتابعة */}
+                    {user && topic.author_id !== user.id && (
+                      <button
+                        onClick={() => handleFollow(topic.author_id)}
+                        className={`ml-2 flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all border ${following.includes(topic.author_id)
+                          ? "bg-purple-100 text-purple-700 border-purple-400 hover:bg-purple-200"
+                          : "bg-pink-100 text-pink-700 border-pink-400 hover:bg-pink-200"
+                        }`}
+                        title={following.includes(topic.author_id) ? "إلغاء المتابعة" : "تابع العضو"}
+                      >
+                        {following.includes(topic.author_id) ? (
+                          <>
+                            <UserMinus2 size={16} /> إلغاء المتابعة
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus2 size={16} /> تابع العضو
+                          </>
+                        )}
+                      </button>
+                    )}
                     <span className="text-xs text-gray-400 ml-2">{new Date(topic.created_at).toLocaleDateString()}</span>
                   </div>
                   {/* العنوان */}

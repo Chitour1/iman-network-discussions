@@ -6,31 +6,60 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import React from "react";
 
-// بيانات وهمية للمجموعات
-const groups = [
-  {
-    id: "1",
-    name: "الإدارة",
-    permissions: ["حذف مواضيع", "تعيين مشرفين"],
-    members: [
-      { id: "1", username: "khaled", role: "admin" },
-    ],
-  },
-  {
-    id: "2",
-    name: "المشرفون",
-    permissions: ["حذف تعليقات", "إغلاق مواضيع"],
-    members: [
-      { id: "2", username: "sara", role: "moderator" },
-    ],
-  },
-];
+const fetchUsers = async () => {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id,username,display_name,role");
+  if (error) throw error;
+  return data;
+};
 
 const AdminPermissions = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
+  const { data: users, isLoading, error } = useQuery({
+    queryKey: ["admin-permissions-users"],
+    queryFn: fetchUsers,
+  });
+
+  // تجميع الأعضاء حسب الدور
+  const groups = [
+    {
+      id: "admins",
+      name: "الإدارة",
+      role: "admin",
+      members: users?.filter(u => u.role === "admin") || [],
+      permissions: [
+        "حذف مواضيع",
+        "تعيين مشرفين",
+        "تغيير إعدادات الموقع",
+      ],
+    },
+    {
+      id: "moderators",
+      name: "المشرفون",
+      role: "moderator",
+      members: users?.filter(u => u.role === "moderator") || [],
+      permissions: [
+        "حذف تعليقات",
+        "إغلاق مواضيع",
+      ],
+    },
+    {
+      id: "users",
+      name: "الأعضاء",
+      role: "user",
+      members: users?.filter(u => u.role === "user") || [],
+      permissions: [
+        "كتابة مواضيع جديدة",
+        "الرد على المشاركات",
+      ],
+    },
+  ];
 
   return (
     <ForumLayout session={session}>
@@ -58,6 +87,16 @@ const AdminPermissions = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {isLoading && (
+                  <TableRow>
+                    <TableCell colSpan={4}>جاري التحميل...</TableCell>
+                  </TableRow>
+                )}
+                {error && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-red-600">{String(error.message)}</TableCell>
+                  </TableRow>
+                )}
                 {groups.map((group) => (
                   <TableRow key={group.id}>
                     <TableCell>{group.name}</TableCell>
@@ -69,25 +108,26 @@ const AdminPermissions = () => {
                       </ul>
                     </TableCell>
                     <TableCell>
-                      {group.members.map((m, i) => (
-                        <span
-                          key={m.id}
-                          className="inline-block rounded bg-gray-200 px-2 py-0.5 ml-1 text-xs"
-                        >
-                          {m.username} ({m.role === "admin" ? "مدير" : "مشرف"})
-                        </span>
-                      ))}
+                      {group.members.length === 0
+                        ? <span className="text-gray-400">لا يوجد حاليا أعضاء</span>
+                        : group.members.map((m, idx) => (
+                          <span
+                            key={m.id}
+                            className="inline-block rounded bg-gray-200 px-2 py-0.5 ml-1 text-xs"
+                          >
+                            {m.username} ({m.display_name ?? "بدون اسم معرض"})
+                          </span>
+                        ))}
                     </TableCell>
                     <TableCell>
                       <Button size="sm" variant="outline" className="ml-1">تعديل</Button>
-                      <Button size="sm" variant="destructive">حذف</Button>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
             <p className="text-gray-500 mt-6 text-center text-sm">
-              قريبًا يمكنك إضافة وتعديل صلاحيات المجموعات والتحكم الكامل من هذه الصفحة.
+              قريبًا يمكنك إضافة وتعديل صلاحيات وعناصر المجموعات مباشرة من هنا.
             </p>
           </CardContent>
         </Card>
@@ -95,4 +135,5 @@ const AdminPermissions = () => {
     </ForumLayout>
   );
 };
+
 export default AdminPermissions;

@@ -197,6 +197,7 @@ export type Database = {
           ban_expires_at: string | null
           ban_reason: string | null
           bio: string | null
+          cover_url: string | null
           created_at: string | null
           display_name: string | null
           id: string
@@ -216,6 +217,7 @@ export type Database = {
           ban_expires_at?: string | null
           ban_reason?: string | null
           bio?: string | null
+          cover_url?: string | null
           created_at?: string | null
           display_name?: string | null
           id: string
@@ -235,6 +237,7 @@ export type Database = {
           ban_expires_at?: string | null
           ban_reason?: string | null
           bio?: string | null
+          cover_url?: string | null
           created_at?: string | null
           display_name?: string | null
           id?: string

@@ -159,14 +159,20 @@ const Profile = () => {
   const handleAvatarChange = async (url: string) => {
     if (!profile) return;
     setProfile({ ...profile, avatar_url: url });
-    await supabase.from("profiles").update({ avatar_url: url }).eq("id", profile.id);
+    await supabase
+      .from("profiles")
+      .update({ avatar_url: url })
+      .eq("id", profile.id);
   };
   // تعديل الغلاف
   const handleCoverChange = async (url: string) => {
     if (!profile) return;
     setProfile({ ...profile, cover_url: url });
     setCoverUrl(url);
-    await supabase.from("profiles").update({ cover_url: url }).eq("id", profile.id);
+    await supabase
+      .from("profiles")
+      .update({ cover_url: url })
+      .eq("id", profile.id);
   };
 
   const handleSaveProfile = async () => {

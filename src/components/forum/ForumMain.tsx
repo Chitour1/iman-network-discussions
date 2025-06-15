@@ -317,6 +317,28 @@ const ForumMain = () => {
   return <main className="flex-1 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
 
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            
+            
+          </div>
+          <Button onClick={handleCreateTopic} className="bg-green-600 hover:bg-green-700">
+            <Plus className="w-4 h-4 ml-2" />
+            موضوع جديد
+          </Button>
+        </div>
+
+        {/* Welcome Message */}
+        <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+          <CardHeader>
+            <CardTitle className="text-green-800">أهلاً وسهلاً بك في شبكة الساحات</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-green-700">نرحب بك في شبكة الساحات للنقاش الإسلامي الحر. هنا يمكنك المشاركة في النقاشات العلمية الهادفة، وتبادل المعرفة والخبرات في بيئة إسلامية حرة ومحترمة.</p>
+          </CardContent>
+        </Card>
+
         {/* آخر المواضيع (كاروسيل) */}
         <div className="mb-8">
           <Card className="bg-gradient-to-r from-blue-50 to-green-50 border-blue-100">
@@ -357,28 +379,6 @@ const ForumMain = () => {
             </CardContent>
           </Card>
         </div>
-
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            
-            
-          </div>
-          <Button onClick={handleCreateTopic} className="bg-green-600 hover:bg-green-700">
-            <Plus className="w-4 h-4 ml-2" />
-            موضوع جديد
-          </Button>
-        </div>
-
-        {/* Welcome Message */}
-        <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
-          <CardHeader>
-            <CardTitle className="text-green-800">أهلاً وسهلاً بك في شبكة الساحات</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-green-700">نرحب بك في شبكة الساحات للنقاش الإسلامي الحر. هنا يمكنك المشاركة في النقاشات العلمية الهادفة، وتبادل المعرفة والخبرات في بيئة إسلامية حرة ومحترمة.</p>
-          </CardContent>
-        </Card>
 
         {/* Forum Categories Grid */}
         {categories.length > 0 && <ForumCategoriesGrid categories={categories} />}

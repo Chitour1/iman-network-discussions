@@ -3,6 +3,7 @@ import { Session } from "@supabase/supabase-js";
 import ForumHeader from "./ForumHeader";
 import ForumWelcome from "./ForumWelcome";
 import { useLocation } from "react-router-dom";
+import ForumSectionQuickNav from "./ForumSectionQuickNav";
 
 interface ForumLayoutProps {
   session: Session | null;
@@ -27,6 +28,7 @@ const ForumLayout = ({ session, children }: ForumLayoutProps) => {
             {children}
           </div>
         </main>
+        <ForumSectionQuickNav />
       </div>
     </div>
   );

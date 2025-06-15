@@ -57,6 +57,7 @@ function FeedTopicModal({
   goToFullView: () => void
 }) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // إغلاق عند الضغط خارج المودال
   useEffect(() => {
@@ -70,23 +71,32 @@ function FeedTopicModal({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [show, onClose]);
 
+  // عند الفتح: مرر إلى أعلى المساحة مباشرة
+  useEffect(() => {
+    if (show && scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = 0;
+    }
+  }, [show]);
+
   if (!show || !topic) return null;
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div
         ref={modalRef}
         className="bg-white rounded-lg p-0 max-w-lg w-[98vw] relative shadow-lg flex flex-col"
-        style={{
-          maxHeight: "90vh",
-        }}
+        style={{ maxHeight: "90vh" }}
       >
         <button
           aria-label="إغلاق"
           onClick={onClose}
           className="absolute left-2 top-2 bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center z-10"
         >✖</button>
-        {/* تغليف كل محتوى التغريدة والتعليقات داخل مساحة تمرير واحدة */}
-        <div className="overflow-y-auto p-6" style={{ maxHeight: "90vh" }}>
+        {/* تغليف محتوى التغريدة والتعليقات داخل مساحة تمرير واحدة مع ref */}
+        <div
+          ref={scrollAreaRef}
+          className="overflow-y-auto p-6"
+          style={{ maxHeight: "90vh" }}
+        >
           {/* الكاتب */}
           <div className="flex items-center gap-2 mb-4">
             <div className="w-9 h-9 rounded-full bg-pink-200 flex items-center justify-center text-pink-600 text-lg font-bold overflow-hidden">

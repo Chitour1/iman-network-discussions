@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,71 +6,65 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Building, BookOpen, Users } from "lucide-react";
-
 const AuthPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
-    const { error } = await supabase.auth.signInWithPassword({
+    const {
+      error
+    } = await supabase.auth.signInWithPassword({
       email,
-      password,
+      password
     });
-
     if (error) {
       toast({
         title: "خطأ في تسجيل الدخول",
         description: error.message,
-        variant: "destructive",
+        variant: "destructive"
       });
     }
-
     setLoading(false);
   };
-
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     const redirectUrl = `${window.location.origin}/`;
-
-    const { error } = await supabase.auth.signUp({
+    const {
+      error
+    } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
         data: {
           username,
-          display_name: displayName,
-        },
-      },
+          display_name: displayName
+        }
+      }
     });
-
     if (error) {
       toast({
         title: "خطأ في التسجيل",
         description: error.message,
-        variant: "destructive",
+        variant: "destructive"
       });
     } else {
       toast({
         title: "تم إرسال رسالة التأكيد",
-        description: "يرجى فحص بريدك الإلكتروني لتأكيد الحساب",
+        description: "يرجى فحص بريدك الإلكتروني لتأكيد الحساب"
       });
     }
-
     setLoading(false);
   };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4">
+  return <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4">
       <div className="w-full max-w-4xl grid md:grid-cols-2 gap-8 items-center">
         {/* Welcome Section */}
         <div className="text-center md:text-right space-y-6">
@@ -81,9 +74,7 @@ const AuthPage = () => {
             </div>
           </div>
           
-          <h1 className="text-4xl font-bold text-gray-800 mb-4">
-            شبكة أنا المؤمن
-          </h1>
+          <h1 className="text-4xl font-bold text-gray-800 mb-4">شبكة الساحات</h1>
           <h2 className="text-2xl text-green-700 mb-4">
             للنقاش الإسلامي
           </h2>
@@ -123,30 +114,12 @@ const AuthPage = () => {
               <TabsContent value="signin" className="space-y-4">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div>
-                    <Input
-                      type="email"
-                      placeholder="البريد الإلكتروني"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      dir="ltr"
-                    />
+                    <Input type="email" placeholder="البريد الإلكتروني" value={email} onChange={e => setEmail(e.target.value)} required dir="ltr" />
                   </div>
                   <div>
-                    <Input
-                      type="password"
-                      placeholder="كلمة المرور"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      dir="ltr"
-                    />
+                    <Input type="password" placeholder="كلمة المرور" value={password} onChange={e => setPassword(e.target.value)} required dir="ltr" />
                   </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-green-600 hover:bg-green-700"
-                    disabled={loading}
-                  >
+                  <Button type="submit" className="w-full bg-green-600 hover:bg-green-700" disabled={loading}>
                     {loading ? "جاري الدخول..." : "دخول"}
                   </Button>
                 </form>
@@ -155,48 +128,18 @@ const AuthPage = () => {
               <TabsContent value="signup" className="space-y-4">
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div>
-                    <Input
-                      type="text"
-                      placeholder="اسم المستخدم"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      required
-                    />
+                    <Input type="text" placeholder="اسم المستخدم" value={username} onChange={e => setUsername(e.target.value)} required />
                   </div>
                   <div>
-                    <Input
-                      type="text"
-                      placeholder="الاسم المعروض"
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      required
-                    />
+                    <Input type="text" placeholder="الاسم المعروض" value={displayName} onChange={e => setDisplayName(e.target.value)} required />
                   </div>
                   <div>
-                    <Input
-                      type="email"
-                      placeholder="البريد الإلكتروني"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      dir="ltr"
-                    />
+                    <Input type="email" placeholder="البريد الإلكتروني" value={email} onChange={e => setEmail(e.target.value)} required dir="ltr" />
                   </div>
                   <div>
-                    <Input
-                      type="password"
-                      placeholder="كلمة المرور"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      dir="ltr"
-                    />
+                    <Input type="password" placeholder="كلمة المرور" value={password} onChange={e => setPassword(e.target.value)} required dir="ltr" />
                   </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                    disabled={loading}
-                  >
+                  <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}>
                     {loading ? "جاري إنشاء الحساب..." : "إنشاء حساب"}
                   </Button>
                 </form>
@@ -205,8 +148,6 @@ const AuthPage = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default AuthPage;

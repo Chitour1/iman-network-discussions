@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -228,12 +227,22 @@ const ForumMain = () => {
 
   const fetchCategories = async () => {
     try {
-      const {
-        data,
-        error
-      } = await supabase.from('categories').select('*').eq('is_active', true).order('sort_order');
-      if (error) throw error;
-      setCategories((data || []) as Category[]);
+      const { data, error } = await supabase.rpc('get_categories_with_stats');
+
+      if (error) {
+        console.error('Error fetching categories via RPC:', error);
+        throw error;
+      }
+      
+      const categoriesData = (data || []).map((cat: any) => ({
+        ...cat,
+        topic_count: Number(cat.topic_count || 0),
+        comment_count: Number(cat.comment_count || 0),
+        view_count: Number(cat.view_count || 0),
+        recent_topics_count: Number(cat.recent_topics_count || 0),
+      }));
+
+      setCategories(categoriesData as Category[]);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }

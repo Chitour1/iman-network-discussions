@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,7 +7,7 @@ import { Plus } from "lucide-react";
 import { stripHtml } from "@/utils/textUtils";
 
 // ✨ ضع هنا uuid تصنيف المنصة الخاص بك:
-const FEED_CATEGORY_ID = "PUT_YOUR_FEED_CATEGORY_UUID_HERE"; // <-- قم باستبداله لاحقًا بالمعرف الصحيح
+const FEED_CATEGORY_ID = "b0dde55b-3f8d-47db-9bf5-d5056e2bfbcb"; // <-- هذا هو المعرّف الصحيح
 
 interface FeedNewPostFormProps {
   onCreated: () => void

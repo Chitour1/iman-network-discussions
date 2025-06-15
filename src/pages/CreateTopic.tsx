@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import CreateTopicForm from "@/components/forum/CreateTopicForm";
@@ -6,7 +7,6 @@ import { useAuth } from "@/hooks/useAuth";
 import AuthModal from "@/components/auth/AuthModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogIn } from "lucide-react";
-import ForumLayout from "@/components/forum/ForumLayout";
 
 interface Category {
   id: string;
@@ -91,14 +91,13 @@ const CreateTopic = () => {
     );
   }
 
-  // **لف مكون إنشاء الموضوع داخل تخطيط المنتدى ليظهر في كل الصفحات**
   return (
-    <ForumLayout session={null}>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50" dir="rtl">
       <CreateTopicForm 
         categories={categories} 
         selectedCategoryId={selectedCategoryId}
       />
-    </ForumLayout>
+    </div>
   );
 };
 

@@ -233,7 +233,21 @@ const ForumMain = () => {
         error
       } = await supabase.from('categories').select('*').eq('is_active', true).order('sort_order');
       if (error) throw error;
-      setCategories((data || []) as Category[]);
+
+      const transformedData: Category[] = (data || []).map(cat => ({
+        id: cat.id,
+        name: cat.name,
+        slug: cat.slug,
+        description: cat.description || '',
+        color: cat.color || '#3B82F6',
+        icon: cat.icon || 'MessageSquare',
+        topic_count: cat.topic_count || 0,
+        comment_count: cat.post_count || 0,
+        view_count: cat.view_count || 0,
+        recent_topics_count: 0, // This data is not in the database yet
+      }));
+
+      setCategories(transformedData);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }

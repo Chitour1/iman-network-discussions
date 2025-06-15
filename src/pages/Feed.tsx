@@ -92,7 +92,13 @@ function FeedTopicModal({
             {author?.display_name?.charAt(0) || author?.username?.charAt(0) || "م"}
           </div>
           <span className="font-semibold text-pink-700">
-            {author?.display_name || author?.username || "مستخدم"}
+            <a
+              href={`/profile/${author?.username || ""}`}
+              className="hover:underline"
+              onClick={e => e.stopPropagation()}
+            >
+              {author?.display_name || author?.username || "مستخدم"}
+            </a>
           </span>
           <span className="text-xs text-gray-400 ml-2">{new Date(topic.created_at).toLocaleDateString()}</span>
         </div>
@@ -393,7 +399,13 @@ export default function Feed() {
                         {author?.display_name?.charAt(0) || author?.username?.charAt(0) || "م"}
                       </div>
                       <span className="font-semibold text-pink-700">
-                        {author?.display_name || author?.username || "مستخدم"}
+                        <a
+                          href={`/profile/${author?.username || ""}`}
+                          className="hover:underline"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          {author?.display_name || author?.username || "مستخدم"}
+                        </a>
                       </span>
                       {/* زر المتابعة */}
                       {user && topic.author_id !== user.id && (

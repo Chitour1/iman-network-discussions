@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,7 +37,7 @@ type TopicType = {
 
 export default function PublicProfilePage() {
   const { username } = useParams();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, session, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [topics, setTopics] = useState<TopicType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,12 +145,16 @@ export default function PublicProfilePage() {
     toast({ title: "تم نسخ المعرف" });
   };
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin h-8 w-8 border-b-2 border-pink-600 rounded-full"></div></div>
+  if (loading || authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-b-2 border-pink-600 rounded-full"></div>
+      </div>
+    );
   }
   if (!profile) {
     return (
-      <ForumLayout session={null}>
+      <ForumLayout session={session}>
         <div className="max-w-xl mx-auto text-center py-24">
           <h2 className="text-xl text-gray-700">العضو غير موجود!</h2>
         </div>
@@ -160,7 +163,7 @@ export default function PublicProfilePage() {
   }
 
   return (
-    <ForumLayout session={null}>
+    <ForumLayout session={session}>
       <div className="max-w-2xl mx-auto bg-white shadow rounded-xl overflow-hidden mt-6">
         {/* غلاف مؤقت */}
         <div className="bg-gradient-to-r from-pink-100 to-blue-100 h-32 relative">
@@ -301,4 +304,3 @@ function ProfileTabs({ topics, username }: { topics: TopicType[], username: stri
     </div>
   )
 }
-

@@ -305,29 +305,30 @@ const ForumMain = () => {
       </main>;
   }
   return <main className="flex-1 p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
+      <div className="max-w-4xl mx-auto">
+        {/* Sticky container */}
+        <div className="sticky top-[4.5rem] z-30 bg-green-50/95 backdrop-blur-sm space-y-4 p-4 rounded-lg shadow-sm mb-6 border border-green-200">
+          <div className="flex justify-between items-center">
+            <div />
+            <Button onClick={handleCreateTopic} className="bg-green-600 hover:bg-green-700">
+              <Plus className="w-4 h-4 ml-2" />
+              موضوع جديد
+            </Button>
           </div>
-          <Button onClick={handleCreateTopic} className="bg-green-600 hover:bg-green-700">
-            <Plus className="w-4 h-4 ml-2" />
-            موضوع جديد
-          </Button>
+          <ForumWelcome />
         </div>
 
-        {/* Welcome Message */}
-        <ForumWelcome />
+        {/* Scrollable content */}
+        <div className="space-y-6">
+          {/* آخر المواضيع (كاروسيل) */}
+          <LatestTopics topics={(latestTopics.length ? latestTopics : topics).slice(0, 10)} onTopicClick={handleTopicClick} />
 
-        {/* آخر المواضيع (كاروسيل) */}
-        <LatestTopics topics={(latestTopics.length ? latestTopics : topics).slice(0, 10)} onTopicClick={handleTopicClick} />
+          {/* Forum Categories Grid */}
+          {categories.length > 0 && <ForumCategoriesGrid categories={categories} />}
 
-        {/* Forum Categories Grid */}
-        {categories.length > 0 && <ForumCategoriesGrid categories={categories} />}
-
-        {/* Topics List */}
-        <TopicList topics={topics} onTopicClick={handleTopicClick} onCreateTopic={handleCreateTopic} />
+          {/* Topics List */}
+          <TopicList topics={topics} onTopicClick={handleTopicClick} onCreateTopic={handleCreateTopic} />
+        </div>
       </div>
       
       {/* Forum Stats */}

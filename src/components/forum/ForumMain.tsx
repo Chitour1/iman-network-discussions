@@ -28,7 +28,7 @@ const ForumMain = () => {
     fetchTopics();
     fetchLatestTopics();
     fetchStats();
-    fetchCategoriesWithStats();
+    fetchCategories();
     fetchTopMembers();
     fetchLatestMember();
   }, []);
@@ -225,14 +225,20 @@ const ForumMain = () => {
     }
   };
 
-  // دالة جديدة لجلب الأقسام مع الإحصائيات الحقيقية من Supabase
-  const fetchCategoriesWithStats = async () => {
+  const fetchCategories = async () => {
     try {
+      // جلب إحصائيات الأقسام من الدالة المخصصة بـ Supabase
       const { data, error } = await supabase.rpc("get_categories_with_stats");
       if (error) throw error;
 
-      // تحويل البيانات مباشرة للـ type المطلوب
-      const transformedData: Category[] = (data || []).map(cat => ({
+      // إذا لم توجد بيانات، أعد مصفوفة فارغة
+      if (!data) {
+        setCategories([]);
+        return;
+      }
+
+      // مطابقة النتائج مع النوع المطلوب وتوفير fallback للأعمدة
+      const transformedData: Category[] = (data || []).map((cat: any) => ({
         id: cat.id,
         name: cat.name,
         slug: cat.slug,
@@ -247,7 +253,7 @@ const ForumMain = () => {
 
       setCategories(transformedData);
     } catch (error) {
-      console.error('Error fetching category stats:', error);
+      console.error('Error fetching categories:', error);
     }
   };
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -389,20 +389,22 @@ const TopicView = () => {
               </Avatar>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  {/* حول اسم المستخدم إلى رابط لملف التعريف */}
-                  <a
-                    href={
-                      topic?.author_name && topic?.author_id
-                        ? `/u/${encodeURIComponent(topic.author_name.replace(/\s/g, ""))}`
-                        : "#"
-                    }
-                    className="font-medium text-gray-800 hover:text-green-700 transition-colors"
-                    tabIndex={0}
-                    aria-label={`ملف ${topic?.author_name}`}
-                    style={{ textDecoration: "none" }}
-                  >
-                    {topic?.author_name}
-                  </a>
+                  {/* استخدم Link للتنقل الداخلي */}
+                  {topic?.author_name && topic?.author_id ? (
+                    <Link
+                      to={`/u/${encodeURIComponent(topic.author_name.replace(/\s/g, ""))}`}
+                      className="font-medium text-gray-800 hover:text-green-700 transition-colors"
+                      tabIndex={0}
+                      aria-label={`ملف ${topic?.author_name}`}
+                      style={{ textDecoration: "none" }}
+                    >
+                      {topic?.author_name}
+                    </Link>
+                  ) : (
+                    <span className="font-medium text-gray-800">
+                      {topic?.author_name}
+                    </span>
+                  )}
                   <span className="text-xs text-gray-500">
                     {topic && formatDistanceToNow(new Date(topic.created_at), {
                       addSuffix: true,
@@ -469,9 +471,22 @@ const TopicView = () => {
                   </Avatar>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="font-medium text-gray-800">
-                        {reply.author_name}
-                      </span>
+                      {/* Link for reply author */}
+                      {reply.author_name && reply.author_id ? (
+                        <Link
+                          to={`/u/${encodeURIComponent(reply.author_name.replace(/\s/g, ""))}`}
+                          className="font-medium text-gray-800 hover:text-green-700 transition-colors"
+                          tabIndex={0}
+                          aria-label={`ملف ${reply.author_name}`}
+                          style={{ textDecoration: "none" }}
+                        >
+                          {reply.author_name}
+                        </Link>
+                      ) : (
+                        <span className="font-medium text-gray-800">
+                          {reply.author_name}
+                        </span>
+                      )}
                       <span className="text-xs text-gray-500">
                         {formatDistanceToNow(new Date(reply.created_at), {
                           addSuffix: true,

@@ -1,8 +1,6 @@
 
 import { Session } from "@supabase/supabase-js";
 import ForumHeader from "./ForumHeader";
-import ForumSidebar from "./ForumSidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import ForumWelcome from "./ForumWelcome";
 import { useLocation } from "react-router-dom";
 
@@ -17,22 +15,19 @@ const ForumLayout = ({ session, children }: ForumLayoutProps) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50" dir="rtl">
-      <SidebarProvider>
-        <div className="flex min-h-screen">
-          <ForumSidebar />
-          <div className="flex-1 flex flex-col">
-            <ForumHeader session={session} />
-            <main className="flex-1 p-4 md:p-6">
-              {!isIndexPage && (
-                <div className="mb-6">
-                  <ForumWelcome />
-                </div>
-              )}
-              {children}
-            </main>
+      <div className="flex flex-col min-h-screen">
+        <ForumHeader session={session} />
+        <main className="flex-1 p-4 md:p-6">
+          <div className="container mx-auto">
+            {!isIndexPage && (
+              <div className="mb-6">
+                <ForumWelcome />
+              </div>
+            )}
+            {children}
           </div>
-        </div>
-      </SidebarProvider>
+        </main>
+      </div>
     </div>
   );
 };

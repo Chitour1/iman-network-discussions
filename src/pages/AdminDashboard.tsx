@@ -1,4 +1,6 @@
+
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,6 +48,7 @@ const AdminDashboard = () => {
   const [pendingItems, setPendingItems] = useState<PendingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     checkAdminAccess();
@@ -252,7 +255,7 @@ const AdminDashboard = () => {
             <h1 className="text-3xl font-bold text-gray-800">لوحة الإدارة</h1>
             <p className="text-gray-600">إدارة شبكة الساحات للنقاش الإسلامي الحر</p>
           </div>
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => navigate('/admin/settings')}>
             <Settings className="w-4 h-4 ml-2" />
             إعدادات المنتدى
           </Button>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -267,7 +268,7 @@ const TopicView = () => {
   if (loading || authLoading) {
     return (
       <ForumLayout session={session}>
-        <div className="max-w-4xl mx-auto">
+        <div>
           <div className="animate-pulse space-y-4">
             <div className="bg-white rounded-lg p-6 shadow-sm">
               <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
@@ -283,7 +284,7 @@ const TopicView = () => {
   if (!topic) {
     return (
       <ForumLayout session={session}>
-        <div className="max-w-4xl mx-auto text-center py-12">
+        <div className="text-center py-12">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">الموضوع غير موجود</h2>
           <Button onClick={() => navigate('/')}>العودة للرئيسية</Button>
         </div>
@@ -293,7 +294,7 @@ const TopicView = () => {
 
   return (
     <ForumLayout session={session}>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between gap-4 mb-6">
           <Button variant="ghost" onClick={() => navigate('/')}>

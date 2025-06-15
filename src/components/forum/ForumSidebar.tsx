@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -26,14 +25,15 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-interface Category {
+interface CategoryStat {
   id: string;
+  topic_count: number;
+  comment_count: number;
+  view_count: number;
   name: string;
   slug: string;
-  description: string;
   color: string;
   icon: string;
-  topic_count: number;
 }
 
 const ForumSidebar = () => {
@@ -43,7 +43,7 @@ const ForumSidebar = () => {
     totalComments: 0,
     todayViews: 0
   });
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<CategoryStat[]>([]);
   const navigate = useNavigate();
 
   const getIconComponent = (iconName: string) => {
@@ -56,7 +56,7 @@ const ForumSidebar = () => {
 
   useEffect(() => {
     fetchStats();
-    fetchCategories();
+    fetchCategoriesWithCounts();
   }, []);
 
   const fetchStats = async () => {
@@ -79,18 +79,37 @@ const ForumSidebar = () => {
     }
   };
 
-  const fetchCategories = async () => {
+  const fetchCategoriesWithCounts = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: cats, error } = await supabase
         .from('categories')
-        .select('*')
+        .select('id, slug, name, color, icon, topic_count, view_count')
         .eq('is_active', true)
-        .order('sort_order');
+        .order('sort_order')
 
       if (error) throw error;
-      setCategories(data || []);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
+
+      const commentsCounts: { [key: string]: number } = {}
+      for (const cat of cats ?? []) {
+        const { count } = await supabase
+          .from('comments')
+          .select('*', { count: 'exact', head: true })
+          .in('topic_id',
+            (await supabase
+              .from('topics')
+              .select('id')
+              .eq('category_id', cat.id)
+            ).data?.map(t => t.id) || []
+          );
+        commentsCounts[cat.id] = count || 0;
+      }
+
+      setCategories((cats ?? []).map(c => ({
+        ...c,
+        comment_count: commentsCounts[c.id] ?? 0
+      })));
+    } catch (err) {
+      console.error('Error fetching categories with counts:', err);
     }
   };
 
@@ -123,7 +142,7 @@ const ForumSidebar = () => {
                   <IconComponent className="w-4 h-4" style={{ color: category.color }} />
                   <span className="text-sm">{category.name}</span>
                   <span className="mr-auto text-xs text-gray-500">
-                    ({category.topic_count})
+                    ({category.topic_count}) / <span className="text-green-700">{category.comment_count}</span>
                   </span>
                 </SidebarMenuButton>
               </SidebarMenuItem>

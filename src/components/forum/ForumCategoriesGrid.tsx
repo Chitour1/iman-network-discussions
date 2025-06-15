@@ -53,6 +53,9 @@ type Props = {
 const ForumCategoriesGrid: React.FC<Props> = ({ categories }) => {
   const navigate = useNavigate();
 
+  // Fetch category stats live instead of relying solely on passed props if needed
+  // Here, we assume the parent now provides fresh, real counts.
+
   return (
     <div className="my-8">
       <h2 className="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2">
@@ -84,15 +87,15 @@ const ForumCategoriesGrid: React.FC<Props> = ({ categories }) => {
               </div>
               <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-around text-xs text-gray-600">
                 <div className="flex flex-col items-center gap-1" title="المواضيع">
-                  <span className="font-semibold">{cat.topic_count || 0}</span>
+                  <span className="font-semibold">{cat.topic_count ?? 0}</span>
                   <span className="text-gray-400">المواضيع</span>
                 </div>
                 <div className="flex flex-col items-center gap-1" title="التعليقات">
-                  <span className="font-semibold">{cat.comment_count || 0}</span>
+                  <span className="font-semibold">{cat.comment_count ?? 0}</span>
                   <span className="text-gray-400">التعليقات</span>
                 </div>
                 <div className="flex flex-col items-center gap-1" title="المشاهدات">
-                  <span className="font-semibold">{cat.view_count || 0}</span>
+                  <span className="font-semibold">{cat.view_count ?? 0}</span>
                   <span className="text-gray-400">المشاهدات</span>
                 </div>
                 {cat.recent_topics_count > 0 && (
@@ -109,5 +112,4 @@ const ForumCategoriesGrid: React.FC<Props> = ({ categories }) => {
     </div>
   );
 };
-
 export default ForumCategoriesGrid;

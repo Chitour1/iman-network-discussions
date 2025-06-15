@@ -45,6 +45,7 @@ const TopicView = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [topic, setTopic] = useState<Topic | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [replies, setReplies] = useState<Reply[]>([]);
   const [newReply, setNewReply] = useState("");
   const [loading, setLoading] = useState(true);
@@ -55,8 +56,18 @@ const TopicView = () => {
     if (slug) {
       fetchTopic();
       fetchReplies();
+      fetchCurrentUser();
     }
   }, [slug]);
+
+  const fetchCurrentUser = async () => {
+    try {
+      const { data } = await supabase.auth.getUser();
+      setUser(data?.user || null);
+    } catch (e) {
+      setUser(null);
+    }
+  };
 
   const fetchTopic = async () => {
     try {
@@ -217,6 +228,38 @@ const TopicView = () => {
 
   const handlePreview = () => {
     setShowPreview(!showPreview);
+  };
+
+  const canEdit = () => {
+    if (!topic || !user) return false;
+    if (user.id !== topic.author_id) return false;
+    // التعديل مسموح خلال ساعتين
+    const createdAt = new Date(topic.created_at);
+    return (Date.now() - createdAt.getTime()) < 2 * 60 * 60 * 1000;
+  };
+
+  const canDelete = () => {
+    if (!topic || !user) return false;
+    if (user.id !== topic.author_id) return false;
+    // الحذف مسموح خلال ساعة واحدة
+    const createdAt = new Date(topic.created_at);
+    return (Date.now() - createdAt.getTime()) < 1 * 60 * 60 * 1000;
+  };
+
+  const handleDelete = async () => {
+    if (!canDelete()) return;
+    if (!window.confirm("هل أنت متأكد أنك تريد حذف الموضوع؟ لا يمكن التراجع.")) return;
+    try {
+      const { error } = await supabase
+        .from('topics')
+        .delete()
+        .eq('id', topic?.id);
+      if (error) throw error;
+      toast({ title: "تم الحذف", description: "تم حذف الموضوع بنجاح" });
+      navigate('/');
+    } catch (e) {
+      toast({ title: "خطأ", description: "حدث خطأ أثناء الحذف", variant: "destructive" });
+    }
   };
 
   if (loading) {

@@ -10,6 +10,7 @@ import { ar } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { getContentPreview } from "@/utils/textUtils";
 import ForumCategoriesGrid from "./ForumCategoriesGrid";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 // Updated interface to match Supabase response
 interface Topic {
@@ -51,9 +52,11 @@ const ForumMain = () => {
   const [categories, setCategories] = useState([]);
   const [topMembers, setTopMembers] = useState<any[]>([]);
   const [latestMember, setLatestMember] = useState<any | null>(null);
+  const [latestTopics, setLatestTopics] = useState<Topic[]>([]);
   const navigate = useNavigate();
   useEffect(() => {
     fetchTopics();
+    fetchLatestTopics();
     fetchStats();
     fetchCategories();
     fetchTopMembers();
@@ -168,6 +171,23 @@ const ForumMain = () => {
       setLoading(false);
     }
   };
+  const fetchLatestTopics = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('topics')
+        .select(`
+            id, title, slug, created_at,
+            profiles!topics_author_id_fkey (display_name, avatar_url)
+          `)
+        .eq('status', 'published')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      setLatestTopics(data || []);
+    } catch (error) {
+      console.error('Error fetching latest topics:', error);
+    }
+  };
   const fetchCategories = async () => {
     try {
       const {
@@ -232,6 +252,49 @@ const ForumMain = () => {
   }
   return <main className="flex-1 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
+
+        {/* آخر المواضيع (كاروسيل) */}
+        <div className="mb-8">
+          <Card className="bg-gradient-to-r from-blue-50 to-green-50 border-blue-100">
+            <CardHeader>
+              <CardTitle className="text-lg font-bold flex gap-2 items-center">
+                <MessageSquare className="w-5 h-5 text-green-600" />
+                آخر المواضيع
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-0">
+              <Carousel>
+                <CarouselContent>
+                  {(latestTopics.length ? latestTopics : topics).slice(0, 10).map((topic) => (
+                    <CarouselItem key={topic.id} className="basis-1/2 p-2">
+                      <div
+                        onClick={() => handleTopicClick(topic.slug)}
+                        className="cursor-pointer bg-white hover:bg-green-50 border border-green-100 rounded-lg p-4 flex gap-3 items-center transition"
+                      >
+                        <Avatar className="w-9 h-9 shrink-0">
+                          <AvatarImage src={topic.profiles?.avatar_url ?? undefined} />
+                          <AvatarFallback>
+                            {topic.profiles?.display_name?.slice(0, 2) ?? "؟؟"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="font-semibold text-gray-800 text-base line-clamp-1">
+                            {topic.title}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {formatDistanceToNow(new Date(topic.created_at), { addSuffix: true, locale: ar })}
+                          </div>
+                        </div>
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious />
+                <CarouselNext />
+              </Carousel>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Header */}
         <div className="flex justify-between items-center">

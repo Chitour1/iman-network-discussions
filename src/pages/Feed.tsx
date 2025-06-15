@@ -100,7 +100,6 @@ function FeedTopicModal({
             fontFamily: "inherit",
             whiteSpace: "pre-line",
             wordBreak: "break-word",
-            OverflowX: "hidden",
             overflowX: "hidden",
           }}
         >

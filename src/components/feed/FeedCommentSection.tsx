@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,7 @@ type Profile = {
 
 interface FeedCommentSectionProps {
   topicId: string;
-  autoFocusInput?: boolean; // اختياري: للتركيز على الحقل لو رغبت
+  autoFocusInput?: boolean;
 }
 
 export default function FeedCommentSection({ topicId, autoFocusInput = false }: FeedCommentSectionProps) {
@@ -32,8 +33,9 @@ export default function FeedCommentSection({ topicId, autoFocusInput = false }: 
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Fetch existing comments
+  // Fetch comments
   useEffect(() => {
     let running = true;
     async function fetchComments() {
@@ -47,7 +49,6 @@ export default function FeedCommentSection({ topicId, autoFocusInput = false }: 
       if (!running) return;
       if (!error && data) {
         setComments(data);
-        // Fetch profiles
         const ids = Array.from(new Set(data.map(c => c.author_id)));
         if (ids.length) {
           const { data: pData } = await supabase
@@ -99,16 +100,27 @@ export default function FeedCommentSection({ topicId, autoFocusInput = false }: 
       }
     }
     setLoading(false);
+    // إعادة تركيز المؤشر على صندوق الإدخال
+    textareaRef.current?.focus();
   }
 
-  function plainComment(content: string): string {
-    // إزالة أكواد التنسيق وتحويل <br> أو <br/> إلى فاصل أسطر
-    // ثم نظف باقي أكواد الـ HTML
-    let c = content
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/(\r\n|\r|\n)/g, '\n'); // توحيد جميع أنواع فواصل الأسطر
-    c = stripHtml(c);
-    return c;
+  // عرض التعليق بعد تنظيف أكواد HTML مع الحفاظ على الأسطر
+  function renderMultilineContent(text: string) {
+    // 1. إزالة كل أكواد الـ HTML مع stripHtml
+    // 2. تقسيم النص عبر newlines
+    // 3. عرض كل سطر في span مع <br/>
+    const clean = stripHtml(
+      text
+        .replace(/\r\n|\r|\n/g, '\n')
+        .replace(/<br\s*\/?>/gi, '\n')
+      );
+    const lines = clean.split('\n');
+    return lines.map((line, idx) =>
+      <span key={idx}>
+        {line}
+        {idx < lines.length - 1 && <br />}
+      </span>
+    );
   }
 
   return (
@@ -130,8 +142,8 @@ export default function FeedCommentSection({ topicId, autoFocusInput = false }: 
                   <span className="text-pink-700 font-semibold text-xs">{author?.display_name || author?.username || "مستخدم"}</span>
                   <span className="text-xs text-gray-400">{new Date(comment.created_at).toLocaleDateString()}</span>
                 </div>
-                <div className="mt-1 text-sm text-gray-700 whitespace-pre-line">
-                  {plainComment(comment.content)}
+                <div className="mt-1 text-sm text-gray-700 break-words whitespace-pre-wrap">
+                  {renderMultilineContent(comment.content)}
                 </div>
               </div>
             </div>
@@ -140,16 +152,22 @@ export default function FeedCommentSection({ topicId, autoFocusInput = false }: 
       </div>
       {user ? (
         <form className="flex gap-2" onSubmit={handleAddComment}>
-          <input
+          <textarea
+            ref={textareaRef}
             autoFocus={autoFocusInput}
-            className="flex-1 border rounded px-3 py-2 bg-white text-sm"
+            className="flex-1 border rounded px-3 py-2 bg-white text-sm resize-y min-h-[38px] max-h-32"
             placeholder="اكتب تعليقك هنا..."
             disabled={loading}
             maxLength={500}
             value={content}
             onChange={e => setContent(e.target.value)}
+            rows={2}
+            style={{ direction: "rtl" }}
           />
-          <Button className="bg-green-600 hover:bg-green-700" disabled={loading || !content.trim()}>
+          <Button className="bg-green-600 hover:bg-green-700"
+            disabled={loading || !content.trim()}
+            type="submit"
+          >
             إضافة
           </Button>
         </form>

@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
+import { stripHtml } from "@/utils/textUtils";
 
 interface FeedNewPostFormProps {
   onCreated: () => void
@@ -15,15 +15,29 @@ export default function FeedNewPostForm({ onCreated }: FeedNewPostFormProps) {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
 
+  function cleanText(val: string) {
+    // أزل أكواد HTML وفصّل الأسطر المكررة، وأزل المسافات الزائدة
+    let txt = val.replace(/<br\s*\/?>/gi, "\n").replace(/\r\n|\r|\n/g, "\n");
+    txt = txt.replace(/^[\s\n\r]+|[\s\n\r]+$/g, ""); // from start/end
+    // strip html tags to ensure it's just plain text
+    return stripHtml ? stripHtml(txt) : txt;
+  }
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!user || !title.trim() || !content.trim()) return;
+    if (!user) return;
+    const pureTitle = cleanText(title);
+    const pureContent = cleanText(content);
+    if (!pureTitle || !pureContent) {
+      toast({ title: "العنوان والمحتوى مطلوبان" });
+      return;
+    }
     setLoading(true);
     // slug بسيط: جزء من العنوان + أرقام عشوائية
-    const slug = (title.trim().replace(/\s+/g, "-").slice(0, 24) + "-" + Math.floor(Math.random() * 1e5)).toLowerCase();
+    const slug = (pureTitle.replace(/\s+/g, "-").slice(0, 24) + "-" + Math.floor(Math.random() * 1e5)).toLowerCase();
     const { error } = await supabase.from("topics").insert({
-      title: title.trim(),
-      content: content.trim(),
+      title: pureTitle,
+      content: pureContent,
       author_id: user.id,
       category_id: "feed-only", // فئة وهمية/خاصة للمنصة (يمكن تخصيصها لاحقًا)
       slug,
@@ -31,7 +45,7 @@ export default function FeedNewPostForm({ onCreated }: FeedNewPostFormProps) {
       is_feed_only: true
     });
     if (error) {
-      toast({ title: "خطأ", description: "تعذر نشر المنشور." });
+      toast({ title: "خطأ", description: "تعذر نشر المنشور. " + (error.message || "") });
     } else {
       toast({ title: "تم نشر منشورك في منصة الساحة فقط" });
       setTitle("");
@@ -45,7 +59,7 @@ export default function FeedNewPostForm({ onCreated }: FeedNewPostFormProps) {
   return (
     <form className="bg-white rounded-lg shadow px-4 py-4 mb-10" onSubmit={handleCreate}>
       <div className="flex items-center gap-2 mb-3">
-        <Plus size={18} className="text-green-700" />
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#15803d" strokeWidth="2" strokeLinecap="round"/></svg>
         <span className="font-bold text-green-700">أضف منشورًا خاصًا بمنصة الساحة</span>
       </div>
       <input
@@ -65,6 +79,8 @@ export default function FeedNewPostForm({ onCreated }: FeedNewPostFormProps) {
         onChange={e => setContent(e.target.value)}
         required
         disabled={loading}
+        rows={3}
+        style={{ direction: "rtl" }}
       />
       <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={loading || !title.trim() || !content.trim()}>
         نشر للمنصة فقط

@@ -1,4 +1,4 @@
-import React from "react";
+
 import { useForm } from "react-hook-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -108,7 +108,7 @@ export default function CategoryFormDialog({
   const mutation = useMutation({
     mutationFn: addOrUpdateCategory,
     onSuccess: (msg) => {
-      toast({ description: msg as string, variant: "default" });
+      toast({ description: msg as string, variant: "success" });
       queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
       onSuccess();
     },

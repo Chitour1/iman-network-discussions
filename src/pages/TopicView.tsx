@@ -389,7 +389,20 @@ const TopicView = () => {
               </Avatar>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-gray-800">{topic?.author_name}</span>
+                  {/* حول اسم المستخدم إلى رابط لملف التعريف */}
+                  <a
+                    href={
+                      topic?.author_name && topic?.author_id
+                        ? `/u/${encodeURIComponent(topic.author_name.replace(/\s/g, ""))}`
+                        : "#"
+                    }
+                    className="font-medium text-gray-800 hover:text-green-700 transition-colors"
+                    tabIndex={0}
+                    aria-label={`ملف ${topic?.author_name}`}
+                    style={{ textDecoration: "none" }}
+                  >
+                    {topic?.author_name}
+                  </a>
                   <span className="text-xs text-gray-500">
                     {topic && formatDistanceToNow(new Date(topic.created_at), {
                       addSuffix: true,

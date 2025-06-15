@@ -12,6 +12,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 import { useAuth } from "@/hooks/useAuth";
 import ForumLayout from "@/components/forum/ForumLayout";
+import ProfileImageUploader from "@/components/ProfileImageUploader";
 
 interface UserProfile {
   id: string;
@@ -19,6 +20,7 @@ interface UserProfile {
   username: string;
   bio: string;
   avatar_url: string;
+  cover_url: string;
   created_at: string;
   total_topics: number;
   total_comments: number;
@@ -44,6 +46,7 @@ const Profile = () => {
   const [bio, setBio] = useState("");
   const [loadingData, setLoadingData] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [coverUrl, setCoverUrl] = useState<string>("");
   const { toast } = useToast();
   const { session, loading: authLoading } = useAuth();
 
@@ -60,13 +63,13 @@ const Profile = () => {
       const { data, error } = await supabase
         .from('profiles')
         .select(`
-          id, display_name, username, bio, avatar_url, created_at, reputation_score
+          id, display_name, username, bio, avatar_url, created_at, reputation_score, cover_url
         `)
         .eq('id', user.user.id)
         .single();
 
       if (error) throw error;
-      
+
       // Calculate topic and comment counts manually for now
       const { count: topicCount } = await supabase
         .from('topics')
@@ -86,6 +89,7 @@ const Profile = () => {
         username: data.username,
         bio: data.bio || "",
         avatar_url: data.avatar_url || "",
+        cover_url: data.cover_url || "",
         created_at: data.created_at,
         total_topics: topicCount || 0,
         total_comments: commentCount || 0,
@@ -95,6 +99,7 @@ const Profile = () => {
       setProfile(transformedProfile);
       setDisplayName(transformedProfile.display_name);
       setBio(transformedProfile.bio);
+      setCoverUrl(transformedProfile.cover_url);
     } catch (error) {
       console.error('Error fetching profile:', error);
     }
@@ -148,6 +153,20 @@ const Profile = () => {
     } finally {
       setLoadingData(false);
     }
+  };
+
+  // تعديل صورة البروفايل
+  const handleAvatarChange = async (url: string) => {
+    if (!profile) return;
+    setProfile({ ...profile, avatar_url: url });
+    await supabase.from("profiles").update({ avatar_url: url }).eq("id", profile.id);
+  };
+  // تعديل الغلاف
+  const handleCoverChange = async (url: string) => {
+    if (!profile) return;
+    setProfile({ ...profile, cover_url: url });
+    setCoverUrl(url);
+    await supabase.from("profiles").update({ cover_url: url }).eq("id", profile.id);
   };
 
   const handleSaveProfile = async () => {
@@ -209,8 +228,30 @@ const Profile = () => {
   return (
     <ForumLayout session={session}>
       <div className="max-w-4xl mx-auto space-y-6">
+        {/* غلاف الملف الشخصي */}
+        <div className="relative w-full">
+          <ProfileImageUploader
+            bucket="covers"
+            url={profile.cover_url}
+            userId={profile.id}
+            rounded={false}
+            label="تغيير صورة الغلاف"
+            onChange={handleCoverChange}
+          />
+          {/* صورة البروفايل دائرية */}
+          <div className="absolute right-8 -bottom-10 z-10">
+            <ProfileImageUploader
+              bucket="avatars"
+              url={profile.avatar_url}
+              userId={profile.id}
+              rounded={true}
+              label="تغيير صورة البروفايل"
+              onChange={handleAvatarChange}
+            />
+          </div>
+        </div>
         {/* Profile Card */}
-        <Card className="shadow-lg">
+        <Card className="shadow-lg mt-14">
           <CardHeader className="pb-4">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-4">

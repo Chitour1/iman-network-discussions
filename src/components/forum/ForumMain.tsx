@@ -233,31 +233,6 @@ const ForumMain = () => {
   return <main className="flex-1 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-green-600">{stats.totalTopics}</div>
-              <div className="text-sm text-gray-600">إجمالي المواضيع</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-blue-600">{stats.totalUsers}</div>
-              <div className="text-sm text-gray-600">إجمالي الأعضاء</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="flex items-center justify-center gap-2">
-                <div className="text-2xl font-bold text-orange-600">{stats.onlineUsers}</div>
-                <Users className="w-5 h-5" />
-              </div>
-              <div className="text-sm text-gray-600">المتصفحين الآن</div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>

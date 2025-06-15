@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,8 +16,6 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const HEADER_HEIGHT_PX = 64;
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -24,9 +23,9 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="min-h-screen bg-gray-50 relative">
+          <div className="min-h-screen bg-gray-50">
             <Header />
-            <main style={{ paddingTop: HEADER_HEIGHT_PX }}>
+            <main>
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/create-topic" element={<CreateTopic />} />

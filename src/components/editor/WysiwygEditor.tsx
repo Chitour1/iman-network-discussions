@@ -32,10 +32,7 @@ import {
   Send
 } from 'lucide-react';
 import EmojiPicker from './EmojiPicker';
-import LinkDialog from './LinkDialog';
 import ImageDialog from './ImageDialog';
-import VideoDialog from './VideoDialog';
-import TableDialog from './TableDialog';
 
 interface WysiwygEditorProps {
   value: string;
@@ -61,25 +58,27 @@ const WysiwygEditor = ({
   const quillRef = useRef<ReactQuill>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showHtmlView, setShowHtmlView] = useState(false);
+  const [showImageDialog, setShowImageDialog] = useState(false);
 
-  // Custom toolbar modules
+  // ReactQuill modules with proper toolbar configuration
   const modules = useMemo(() => ({
-    toolbar: {
-      container: '#toolbar',
-      handlers: {
-        emoji: () => setShowEmojiPicker(!showEmojiPicker),
-        preview: () => onPreview?.(),
-        insertLink: () => handleInsertLink(),
-        insertImage: () => handleInsertImage(),
-        insertVideo: () => handleInsertVideo(),
-        insertTable: () => handleInsertTable(),
-        toggleHtml: () => setShowHtmlView(!showHtmlView)
-      }
-    },
+    toolbar: [
+      [{ 'font': [] }],
+      [{ 'size': ['small', false, 'large', 'huge'] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'color': [] }, { 'background': [] }],
+      [{ 'align': [] }],
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      [{ 'indent': '-1'}, { 'indent': '+1' }],
+      ['link', 'image', 'video'],
+      ['blockquote', 'code-block'],
+      [{ 'direction': 'rtl' }],
+      ['clean']
+    ],
     clipboard: {
       matchVisual: false
     }
-  }), [showEmojiPicker, showHtmlView, onPreview]);
+  }), []);
 
   const formats = [
     'header', 'font', 'size', 'color', 'background',
@@ -87,50 +86,26 @@ const WysiwygEditor = ({
     'align', 'direction',
     'list', 'bullet', 'indent',
     'link', 'image', 'video',
-    'blockquote', 'code-block', 'code',
-    'table'
+    'blockquote', 'code-block', 'code'
   ];
 
-  const handleInsertLink = () => {
-    const url = prompt('أدخل رابط الصفحة:');
-    const text = prompt('أدخل نص الرابط:') || url;
-    if (url && quillRef.current) {
+  const handleEmojiSelect = (emoji: string) => {
+    if (quillRef.current) {
       const quill = quillRef.current.getEditor();
       const range = quill.getSelection();
       if (range) {
-        quill.insertText(range.index, text || url);
-        quill.formatText(range.index, text?.length || url.length, 'link', url);
+        quill.insertText(range.index, emoji);
       }
     }
+    setShowEmojiPicker(false);
   };
 
-  const handleInsertImage = () => {
-    const url = prompt('أدخل رابط الصورة:');
-    if (url && quillRef.current) {
+  const handleImageInsert = (url: string, alt: string) => {
+    if (quillRef.current) {
       const quill = quillRef.current.getEditor();
       const range = quill.getSelection();
       if (range) {
         quill.insertEmbed(range.index, 'image', url);
-      }
-    }
-  };
-
-  const handleInsertVideo = () => {
-    const url = prompt('أدخل رابط الفيديو (YouTube/Vimeo):');
-    if (url && quillRef.current) {
-      const quill = quillRef.current.getEditor();
-      const range = quill.getSelection();
-      if (range) {
-        // Convert YouTube URL to embed format
-        let embedUrl = url;
-        if (url.includes('youtube.com/watch?v=')) {
-          const videoId = url.split('v=')[1]?.split('&')[0];
-          embedUrl = `https://www.youtube.com/embed/${videoId}`;
-        } else if (url.includes('youtu.be/')) {
-          const videoId = url.split('youtu.be/')[1]?.split('?')[0];
-          embedUrl = `https://www.youtube.com/embed/${videoId}`;
-        }
-        quill.insertEmbed(range.index, 'video', embedUrl);
       }
     }
   };
@@ -159,124 +134,178 @@ const WysiwygEditor = ({
     }
   };
 
-  const handleEmojiSelect = (emoji: string) => {
-    if (quillRef.current) {
-      const quill = quillRef.current.getEditor();
-      const range = quill.getSelection();
-      if (range) {
-        quill.insertText(range.index, emoji);
-      }
-    }
-    setShowEmojiPicker(false);
-  };
-
   return (
     <div className="border rounded-lg bg-white" dir="rtl">
       {/* Custom Toolbar */}
-      <div id="toolbar" className="border-b p-2">
-        <div className="flex flex-wrap gap-1 items-center">
+      <div className="border-b p-2 bg-gray-50">
+        <div className="flex flex-wrap gap-2 items-center">
           {/* Text Formatting */}
           <div className="flex gap-1">
-            <button className="ql-bold" title="غامق">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const quill = quillRef.current?.getEditor();
+                if (quill) {
+                  quill.format('bold', !quill.getFormat().bold);
+                }
+              }}
+              title="غامق"
+            >
               <Bold className="w-4 h-4" />
-            </button>
-            <button className="ql-italic" title="مائل">
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const quill = quillRef.current?.getEditor();
+                if (quill) {
+                  quill.format('italic', !quill.getFormat().italic);
+                }
+              }}
+              title="مائل"
+            >
               <Italic className="w-4 h-4" />
-            </button>
-            <button className="ql-underline" title="تحته خط">
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const quill = quillRef.current?.getEditor();
+                if (quill) {
+                  quill.format('underline', !quill.getFormat().underline);
+                }
+              }}
+              title="تحته خط"
+            >
               <Underline className="w-4 h-4" />
-            </button>
-            <button className="ql-strike" title="يتوسطه خط">
-              <Strikethrough className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
-
-          <Separator orientation="vertical" className="h-6" />
-
-          {/* Font and Size */}
-          <select className="ql-font" title="نوع الخط">
-            <option value="">افتراضي</option>
-            <option value="serif">Serif</option>
-            <option value="monospace">Monospace</option>
-          </select>
-          
-          <select className="ql-size" title="حجم الخط">
-            <option value="small">صغير</option>
-            <option value="">عادي</option>
-            <option value="large">كبير</option>
-            <option value="huge">كبير جداً</option>
-          </select>
-
-          <Separator orientation="vertical" className="h-6" />
-
-          {/* Colors */}
-          <select className="ql-color" title="لون النص"></select>
-          <select className="ql-background" title="لون الخلفية"></select>
 
           <Separator orientation="vertical" className="h-6" />
 
           {/* Alignment */}
           <div className="flex gap-1">
-            <button className="ql-align" value="" title="محاذاة لليسار">
-              <AlignLeft className="w-4 h-4" />
-            </button>
-            <button className="ql-align" value="center" title="توسيط">
-              <AlignCenter className="w-4 h-4" />
-            </button>
-            <button className="ql-align" value="right" title="محاذاة لليمين">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const quill = quillRef.current?.getEditor();
+                if (quill) {
+                  quill.format('align', 'right');
+                }
+              }}
+              title="محاذاة لليمين"
+            >
               <AlignRight className="w-4 h-4" />
-            </button>
-            <button className="ql-align" value="justify" title="ضبط النص">
-              <AlignJustify className="w-4 h-4" />
-            </button>
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const quill = quillRef.current?.getEditor();
+                if (quill) {
+                  quill.format('align', 'center');
+                }
+              }}
+              title="توسيط"
+            >
+              <AlignCenter className="w-4 h-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const quill = quillRef.current?.getEditor();
+                if (quill) {
+                  quill.format('align', 'left');
+                }
+              }}
+              title="محاذاة لليسار"
+            >
+              <AlignLeft className="w-4 h-4" />
+            </Button>
           </div>
 
           <Separator orientation="vertical" className="h-6" />
 
           {/* Lists */}
           <div className="flex gap-1">
-            <button className="ql-list" value="ordered" title="قائمة مرقمة">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const quill = quillRef.current?.getEditor();
+                if (quill) {
+                  quill.format('list', 'ordered');
+                }
+              }}
+              title="قائمة مرقمة"
+            >
               <ListOrdered className="w-4 h-4" />
-            </button>
-            <button className="ql-list" value="bullet" title="قائمة نقطية">
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const quill = quillRef.current?.getEditor();
+                if (quill) {
+                  quill.format('list', 'bullet');
+                }
+              }}
+              title="قائمة نقطية"
+            >
               <List className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
-
-          <button className="ql-indent" value="-1" title="تقليل المسافة البادئة">«</button>
-          <button className="ql-indent" value="+1" title="زيادة المسافة البادئة">»</button>
 
           <Separator orientation="vertical" className="h-6" />
 
           {/* Insert Tools */}
           <div className="flex gap-1">
-            <button onClick={handleInsertLink} title="إدراج رابط">
-              <Link className="w-4 h-4" />
-            </button>
-            <button onClick={handleInsertImage} title="إدراج صورة">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowImageDialog(true)}
+              title="إدراج صورة"
+            >
               <Image className="w-4 h-4" />
-            </button>
-            <button onClick={handleInsertVideo} title="إدراج فيديو">
-              <Video className="w-4 h-4" />
-            </button>
-            <button className="ql-blockquote" title="اقتباس">
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const quill = quillRef.current?.getEditor();
+                if (quill) {
+                  quill.format('blockquote', !quill.getFormat().blockquote);
+                }
+              }}
+              title="اقتباس"
+            >
               <Quote className="w-4 h-4" />
-            </button>
-            <button className="ql-code-block" title="كود برمجي">
-              <Code className="w-4 h-4" />
-            </button>
-            <button onClick={handleInsertTable} title="إدراج جدول">
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleInsertTable}
+              title="إدراج جدول"
+            >
               <span className="text-xs">📊</span>
-            </button>
+            </Button>
           </div>
 
           <Separator orientation="vertical" className="h-6" />
 
           {/* Emoji */}
           <div className="relative">
-            <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} title="رموز تعبيرية">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              title="رموز تعبيرية"
+            >
               <Smile className="w-4 h-4" />
-            </button>
+            </Button>
             {showEmojiPicker && (
               <div className="absolute top-full left-0 z-50 mt-1">
                 <EmojiPicker onEmojiSelect={handleEmojiSelect} />
@@ -286,37 +315,27 @@ const WysiwygEditor = ({
 
           <Separator orientation="vertical" className="h-6" />
 
-          {/* Undo/Redo */}
-          <div className="flex gap-1">
-            <button className="ql-undo" title="تراجع">
-              <Undo className="w-4 h-4" />
-            </button>
-            <button className="ql-redo" title="إعادة">
-              <Redo className="w-4 h-4" />
-            </button>
-          </div>
-
-          <Separator orientation="vertical" className="h-6" />
-
           {/* View Options */}
           <div className="flex gap-1">
-            <button onClick={() => setShowHtmlView(!showHtmlView)} title="عرض HTML">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowHtmlView(!showHtmlView)}
+              title="عرض HTML"
+            >
               <Code className="w-4 h-4" />
-            </button>
+            </Button>
             {onPreview && (
-              <button onClick={onPreview} title="معاينة">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onPreview}
+                title="معاينة"
+              >
                 <Eye className="w-4 h-4" />
-              </button>
+              </Button>
             )}
           </div>
-
-          {/* Direction */}
-          <Separator orientation="vertical" className="h-6" />
-          <button className="ql-direction" value="rtl" title="من اليمين لليسار">RTL</button>
-          <button className="ql-direction" value="ltr" title="من اليسار لليمين">LTR</button>
-
-          {/* Remove Formatting */}
-          <button className="ql-clean" title="محو التنسيق">🧽</button>
         </div>
       </div>
 
@@ -328,6 +347,7 @@ const WysiwygEditor = ({
             onChange={(e) => onChange(e.target.value)}
             className="w-full h-[300px] p-4 font-mono text-sm border-0 resize-none focus:outline-none"
             dir="ltr"
+            placeholder="<p>اكتب HTML هنا...</p>"
           />
         ) : (
           <ReactQuill
@@ -338,7 +358,11 @@ const WysiwygEditor = ({
             placeholder={placeholder}
             modules={modules}
             formats={formats}
-            style={{ direction: 'rtl' }}
+            className="h-[300px]"
+            style={{ 
+              direction: 'rtl',
+              fontFamily: 'Arial, sans-serif'
+            }}
           />
         )}
       </div>
@@ -379,6 +403,13 @@ const WysiwygEditor = ({
           </div>
         </div>
       )}
+
+      {/* Image Dialog */}
+      <ImageDialog
+        isOpen={showImageDialog}
+        onClose={() => setShowImageDialog(false)}
+        onInsert={handleImageInsert}
+      />
     </div>
   );
 };

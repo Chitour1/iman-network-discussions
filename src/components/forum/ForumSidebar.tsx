@@ -20,14 +20,9 @@ import {
   Calendar,
   Settings,
   Shield,
-  Book,
-  Scroll,
-  Scale,
   Heart,
-  Clock,
   Megaphone,
-  UserPlus,
-  HelpCircle
+  UserPlus
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -53,8 +48,8 @@ const ForumSidebar = () => {
 
   const getIconComponent = (iconName: string) => {
     const icons: { [key: string]: any } = {
-      Home, BookOpen, Book, Scroll, Scale, Heart, Star, Clock, 
-      Megaphone, Users, MessageSquare, UserPlus, HelpCircle, TrendingUp
+      Home, BookOpen, Shield, Heart, Star, 
+      Megaphone, Users, MessageSquare, UserPlus, TrendingUp
     };
     return icons[iconName] || MessageSquare;
   };
@@ -126,7 +121,7 @@ const ForumSidebar = () => {
               <SidebarMenuItem key={category.id}>
                 <SidebarMenuButton onClick={() => handleCategoryClick(category.slug)}>
                   <IconComponent className="w-4 h-4" style={{ color: category.color }} />
-                  <span>{category.name}</span>
+                  <span className="text-sm">{category.name}</span>
                   <span className="mr-auto text-xs text-gray-500">
                     ({category.topic_count})
                   </span>

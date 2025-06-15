@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, MessageSquare, Eye, ThumbsUp, Clock, User, Pin } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
+import { getContentPreview } from "@/utils/textUtils";
 
 interface Category {
   id: string;
@@ -117,7 +118,7 @@ const CategoryView = () => {
   };
 
   const handleCreateTopic = () => {
-    navigate(`/create-topic?category=${category?.name}`);
+    navigate(`/create-topic?category=${category?.id}`);
   };
 
   const handleTopicClick = (topicSlug: string) => {
@@ -208,12 +209,14 @@ const CategoryView = () => {
                         {topic.is_pinned && (
                           <Pin className="w-4 h-4 text-green-600" />
                         )}
-                        <Badge 
-                          variant="secondary"
-                          style={{ backgroundColor: `${category?.color}20`, color: category?.color }}
-                        >
-                          مثبت
-                        </Badge>
+                        {topic.is_pinned && (
+                          <Badge 
+                            variant="secondary"
+                            style={{ backgroundColor: `${category?.color}20`, color: category?.color }}
+                          >
+                            مثبت
+                          </Badge>
+                        )}
                       </div>
                       
                       <h3 
@@ -224,7 +227,7 @@ const CategoryView = () => {
                       </h3>
                       
                       <p className="text-gray-600 mb-3 line-clamp-2">
-                        {topic.content.substring(0, 150)}...
+                        {getContentPreview(topic.content, 150)}
                       </p>
                       
                       <div className="flex items-center gap-4 text-sm text-gray-500">

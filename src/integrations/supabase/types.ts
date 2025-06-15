@@ -355,6 +355,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_featured: boolean | null
+          is_feed_only: boolean
           is_locked: boolean | null
           is_pinned: boolean | null
           last_reply_at: string | null
@@ -375,6 +376,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_featured?: boolean | null
+          is_feed_only?: boolean
           is_locked?: boolean | null
           is_pinned?: boolean | null
           last_reply_at?: string | null
@@ -395,6 +397,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_featured?: boolean | null
+          is_feed_only?: boolean
           is_locked?: boolean | null
           is_pinned?: boolean | null
           last_reply_at?: string | null

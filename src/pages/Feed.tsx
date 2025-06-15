@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { MessageCircle, Heart, Users, UserPlus2, UserMinus2 } from "lucide-react";
 import { stripHtml } from "@/utils/textUtils";
+import FeedCommentSection from "@/components/feed/FeedCommentSection";
+import FeedNewPostForm from "@/components/feed/FeedNewPostForm";
 
 // ========== Types ============
 interface FeedTopic {
@@ -17,6 +19,7 @@ interface FeedTopic {
   reply_count: number;
   slug: string;
   author_id: string;
+  is_feed_only: boolean;
 }
 
 type ProfileData = {
@@ -180,6 +183,7 @@ export default function Feed() {
   const [profiles, setProfiles] = useState<Record<string, ProfileData>>({});
   const [selectedTopic, setSelectedTopic] = useState<FeedTopic|null>(null);
   const navigate = useNavigate();
+  const [reloadFeed, setReloadFeed] = useState(0);
 
   // جلب قائمة المتابعين من LocalStorage
   useEffect(() => {
@@ -188,17 +192,18 @@ export default function Feed() {
     }
   }, [user, authLoading]);
 
-  // جلب المواضيع
+  // جلب المواضيع (تشمل is_feed_only=true أو is_feed_only=false جميع المواضيع)
   useEffect(() => {
     let running = true;
     async function fetchFeed() {
       setFeedLoading(true);
-      // فقط الحقول الأساسية بدون محاولة جلب علاقات profiles
+      // فقط المواضيع المنشورة للمنتدى أو المخصصة للمنصة is_feed_only
       const { data, error } = await supabase
         .from("topics")
-        .select("id, title, content, created_at, like_count, reply_count, slug, author_id")
-        .eq("status", "published")
+        .select("id, title, content, created_at, like_count, reply_count, slug, author_id, is_feed_only")
         .order("created_at", { ascending: false })
+        .eq("status", "published")
+        .or("is_feed_only.eq.true,is_feed_only.eq.false") // إحضار الجميع (هذا ضروري ليتم الفلترة لاحقًا)
         .limit(30);
       if (!running) return;
       if (error) {
@@ -212,7 +217,7 @@ export default function Feed() {
     }
     fetchFeed();
     return () => { running = false };
-  }, [activeTab]);
+  }, [activeTab, reloadFeed]);
 
   // جلب بيانات جميع الـ authors المعروضين مرة واحدة
   useEffect(() => {
@@ -312,9 +317,11 @@ export default function Feed() {
     if (!user) return [];
     return following;
   }, [user, following]);
+  // === فلتر المستخدم لما يعرض في المنصة: فقط is_feed_only أو التي ليست فقط المنتدى ===
   const filteredTopics = activeTab === "foryou"
-    ? topics
-    : topics.filter(t => followedAuthors.includes(t.author_id));
+    ? topics.filter(t => t.is_feed_only === true || t.is_feed_only === false)
+    : topics.filter(t => followedAuthors.includes(t.author_id) && (t.is_feed_only === true || t.is_feed_only === false));
+    // لا نعرض سوى المواضيع التي تخص المنصة أو العامة (المنتدى قد يدقق أكثر)
 
   // ==== عند الضغط على منشور: عرض modal ====
   function handleTopicClick(topic: FeedTopic) {
@@ -360,6 +367,8 @@ export default function Feed() {
         </div>
 
         {/* Feed List */}
+        <FeedNewPostForm onCreated={() => setReloadFeed(reload => reload + 1)} />
+
         {feedLoading || loading ? (
           <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-b-2 border-pink-600 rounded-full"></div></div>
         ) : (
@@ -455,6 +464,8 @@ export default function Feed() {
                         onClick={e => {e.stopPropagation(); navigate(`/topic/${topic.slug}`);}}
                       >عرض كامل</Button>
                     </div>
+                    {/* قسم التعليقات الجديد */}
+                    <FeedCommentSection topicId={topic.id} />
                   </div>
                 );
               })}

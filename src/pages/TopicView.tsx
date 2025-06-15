@@ -30,13 +30,14 @@ interface Topic {
   like_count: number;
   created_at: string;
   author_id: string;
+  category_id: string;
+  category_name: string;
+  category_color: string;
+  category_slug: string;
   author_name: string;
   author_avatar: string | null;
   author_bio: string | null;
   author_signature: string | null;
-  category_id: string; // <-- add this
-  category_name: string;
-  category_color: string;
 }
 
 interface Reply {
@@ -97,7 +98,7 @@ const TopicView = () => {
           .single(),
         supabase
           .from('categories')
-          .select('name, color')
+          .select('name, color, slug')
           .eq('id', topicData.category_id)
           .single()
       ]);
@@ -111,13 +112,14 @@ const TopicView = () => {
         like_count: topicData.like_count || 0,
         created_at: topicData.created_at,
         author_id: topicData.author_id,
-        category_id: topicData.category_id, // <-- add this
+        category_id: topicData.category_id,
         author_name: authorResult.data?.display_name || "مستخدم مجهول",
         author_avatar: authorResult.data?.avatar_url || null,
         author_bio: authorResult.data?.bio || null,
         author_signature: authorResult.data?.signature || null,
         category_name: categoryResult.data?.name || "",
-        category_color: categoryResult.data?.color || "#3B82F6"
+        category_color: categoryResult.data?.color || "#3B82F6",
+        category_slug: categoryResult.data?.slug || "",
       };
 
       setTopic(transformedTopic);
@@ -316,8 +318,8 @@ const TopicView = () => {
             <BreadcrumbItem>
               <BreadcrumbLink
                 href={
-                  topic?.category_name && topic?.category_id
-                    ? `/category/${encodeURIComponent(topic.category_name)}`
+                  topic?.category_slug
+                    ? `/category/${encodeURIComponent(topic.category_slug)}`
                     : "#"
                 }
                 className="font-semibold text-base"

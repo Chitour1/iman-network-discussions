@@ -135,13 +135,11 @@ const WysiwygEditor = ({
   const handleImageInsert = (url: string, alt: string) => {
     const quill = getQuill();
     if (quill) {
-      const range = quill.getSelection(true);
+      const range = quill.getSelection();
       if (range) {
-        // Insert image as HTML to include alt text and styles
-        const imageHtml = `<p style="text-align: center;"><img src="${url}" alt="${alt || 'صورة'}" style="max-width: 100%; height: auto; display: inline-block;" /></p>`;
-        const delta = quill.clipboard.convert({ html: imageHtml });
-        quill.updateContents(delta, 'user');
-        // Move cursor after the inserted image
+        // Insert image with proper attributes
+        quill.insertEmbed(range.index, 'image', url);
+        // Move cursor after the image
         quill.setSelection(range.index + 1);
       }
     }

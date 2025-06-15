@@ -27,10 +27,7 @@ interface Topic {
   is_pinned: boolean;
   created_at: string;
   slug: string;
-  profiles: {
-    display_name: string;
-    username: string;
-  } | null;
+  author_name: string;
 }
 
 const CategoryView = () => {
@@ -73,11 +70,11 @@ const CategoryView = () => {
         .single();
 
       if (categoryData) {
-        const { data, error } = await supabase
+        const { data: topicsData, error } = await supabase
           .from('topics')
           .select(`
-            *,
-            profiles (display_name, username)
+            id, title, content, view_count, reply_count, like_count,
+            is_pinned, created_at, slug, author_id
           `)
           .eq('category_id', categoryData.id)
           .eq('status', 'published')
@@ -85,7 +82,32 @@ const CategoryView = () => {
           .order('created_at', { ascending: false });
 
         if (error) throw error;
-        setTopics(data || []);
+
+        // Get author names separately
+        const authorIds = topicsData?.map(t => t.author_id) || [];
+        const uniqueAuthorIds = [...new Set(authorIds)];
+
+        const { data: authors } = await supabase
+          .from('profiles')
+          .select('id, display_name')
+          .in('id', uniqueAuthorIds);
+
+        const authorMap = new Map(authors?.map(a => [a.id, a.display_name]) || []);
+
+        const transformedTopics: Topic[] = (topicsData || []).map(topic => ({
+          id: topic.id,
+          title: topic.title,
+          content: topic.content,
+          view_count: topic.view_count || 0,
+          reply_count: topic.reply_count || 0,
+          like_count: topic.like_count || 0,
+          is_pinned: topic.is_pinned || false,
+          created_at: topic.created_at,
+          slug: topic.slug,
+          author_name: authorMap.get(topic.author_id) || "مستخدم مجهول"
+        }));
+
+        setTopics(transformedTopics);
       }
     } catch (error) {
       console.error('Error fetching topics:', error);
@@ -146,18 +168,18 @@ const CategoryView = () => {
         </div>
 
         {/* Category Info */}
-        <Card className="border-2" style={{ borderColor: category.color }}>
+        <Card className="border-2" style={{ borderColor: category?.color }}>
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
               <div 
                 className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: category.color }}
+                style={{ backgroundColor: category?.color }}
               ></div>
-              {category.name}
+              {category?.name}
             </CardTitle>
-            <p className="text-gray-600">{category.description}</p>
+            <p className="text-gray-600">{category?.description}</p>
             <div className="text-sm text-gray-500">
-              {category.topic_count} موضوع
+              {category?.topic_count} موضوع
             </div>
           </CardHeader>
         </Card>
@@ -188,7 +210,7 @@ const CategoryView = () => {
                         )}
                         <Badge 
                           variant="secondary"
-                          style={{ backgroundColor: `${category.color}20`, color: category.color }}
+                          style={{ backgroundColor: `${category?.color}20`, color: category?.color }}
                         >
                           مثبت
                         </Badge>
@@ -208,7 +230,7 @@ const CategoryView = () => {
                       <div className="flex items-center gap-4 text-sm text-gray-500">
                         <div className="flex items-center gap-1">
                           <User className="w-4 h-4" />
-                          <span>{topic.profiles?.display_name || "مستخدم مجهول"}</span>
+                          <span>{topic.author_name}</span>
                         </div>
                         
                         <div className="flex items-center gap-1">

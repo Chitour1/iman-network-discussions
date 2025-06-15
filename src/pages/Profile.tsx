@@ -31,10 +31,8 @@ interface UserTopic {
   view_count: number;
   reply_count: number;
   created_at: string;
-  categories: {
-    name: string;
-    color: string;
-  };
+  category_name: string;
+  category_color: string;
 }
 
 const Profile = () => {
@@ -59,15 +57,30 @@ const Profile = () => {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          id, display_name, username, bio, avatar_url, created_at,
+          total_topics, total_comments, reputation_score
+        `)
         .eq('id', user.user.id)
         .single();
 
       if (error) throw error;
       
-      setProfile(data);
-      setDisplayName(data.display_name || "");
-      setBio(data.bio || "");
+      const transformedProfile: UserProfile = {
+        id: data.id,
+        display_name: data.display_name || "",
+        username: data.username,
+        bio: data.bio || "",
+        avatar_url: data.avatar_url || "",
+        created_at: data.created_at,
+        total_topics: data.total_topics || 0,
+        total_comments: data.total_comments || 0,
+        reputation_score: data.reputation_score || 0
+      };
+
+      setProfile(transformedProfile);
+      setDisplayName(transformedProfile.display_name);
+      setBio(transformedProfile.bio);
     } catch (error) {
       console.error('Error fetching profile:', error);
     }
@@ -78,11 +91,10 @@ const Profile = () => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) return;
 
-      const { data, error } = await supabase
+      const { data: topicsData, error } = await supabase
         .from('topics')
         .select(`
-          id, title, slug, view_count, reply_count, created_at,
-          categories (name, color)
+          id, title, slug, view_count, reply_count, created_at, category_id
         `)
         .eq('author_id', user.user.id)
         .eq('status', 'published')
@@ -90,7 +102,33 @@ const Profile = () => {
         .limit(10);
 
       if (error) throw error;
-      setTopics(data || []);
+
+      // Get category info separately
+      const categoryIds = topicsData?.map(t => t.category_id) || [];
+      const uniqueCategoryIds = [...new Set(categoryIds)];
+
+      const { data: categories } = await supabase
+        .from('categories')
+        .select('id, name, color')
+        .in('id', uniqueCategoryIds);
+
+      const categoryMap = new Map(categories?.map(c => [c.id, { name: c.name, color: c.color }]) || []);
+
+      const transformedTopics: UserTopic[] = (topicsData || []).map(topic => {
+        const category = categoryMap.get(topic.category_id);
+        return {
+          id: topic.id,
+          title: topic.title,
+          slug: topic.slug,
+          view_count: topic.view_count || 0,
+          reply_count: topic.reply_count || 0,
+          created_at: topic.created_at,
+          category_name: category?.name || "",
+          category_color: category?.color || "#3B82F6"
+        };
+      });
+
+      setTopics(transformedTopics);
     } catch (error) {
       console.error('Error fetching user topics:', error);
     } finally {
@@ -163,20 +201,20 @@ const Profile = () => {
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-4">
                 <Avatar className="w-20 h-20">
-                  <AvatarImage src={profile.avatar_url} />
+                  <AvatarImage src={profile?.avatar_url} />
                   <AvatarFallback className="bg-green-100 text-green-700 text-2xl">
-                    {profile.display_name?.slice(0, 2) || "عض"}
+                    {profile?.display_name?.slice(0, 2) || "عض"}
                   </AvatarFallback>
                 </Avatar>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-800">
-                    {profile.display_name || "عضو جديد"}
+                    {profile?.display_name || "عضو جديد"}
                   </h1>
-                  <p className="text-gray-600">@{profile.username}</p>
+                  <p className="text-gray-600">@{profile?.username}</p>
                   <div className="flex items-center gap-2 mt-2">
                     <Calendar className="w-4 h-4 text-gray-500" />
                     <span className="text-sm text-gray-500">
-                      انضم {formatDistanceToNow(new Date(profile.created_at), {
+                      انضم {profile && formatDistanceToNow(new Date(profile.created_at), {
                         addSuffix: true,
                         locale: ar
                       })}
@@ -229,24 +267,24 @@ const Profile = () => {
             ) : (
               <div>
                 <p className="text-gray-700 mb-4">
-                  {profile.bio || "لم يتم إضافة نبذة شخصية بعد"}
+                  {profile?.bio || "لم يتم إضافة نبذة شخصية بعد"}
                 </p>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-600">
-                      {profile.total_topics}
+                      {profile?.total_topics}
                     </div>
                     <div className="text-sm text-gray-600">مواضيع</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-blue-600">
-                      {profile.total_comments}
+                      {profile?.total_comments}
                     </div>
                     <div className="text-sm text-gray-600">تعليقات</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-purple-600">
-                      {profile.reputation_score}
+                      {profile?.reputation_score}
                     </div>
                     <div className="text-sm text-gray-600">نقاط السمعة</div>
                   </div>
@@ -284,11 +322,11 @@ const Profile = () => {
                         <Badge
                           variant="secondary"
                           style={{
-                            backgroundColor: `${topic.categories.color}20`,
-                            color: topic.categories.color
+                            backgroundColor: `${topic.category_color}20`,
+                            color: topic.category_color
                           }}
                         >
-                          {topic.categories.name}
+                          {topic.category_name}
                         </Badge>
                         <span>
                           {formatDistanceToNow(new Date(topic.created_at), {

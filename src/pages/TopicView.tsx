@@ -21,14 +21,9 @@ interface Topic {
   like_count: number;
   created_at: string;
   author_id: string;
-  profiles: {
-    display_name: string;
-    username: string;
-  } | null;
-  categories: {
-    name: string;
-    color: string;
-  } | null;
+  author_name: string;
+  category_name: string;
+  category_color: string;
 }
 
 interface Reply {
@@ -37,10 +32,7 @@ interface Reply {
   created_at: string;
   author_id: string;
   like_count: number;
-  profiles: {
-    display_name: string;
-    username: string;
-  } | null;
+  author_name: string;
 }
 
 const TopicView = () => {
@@ -62,25 +54,53 @@ const TopicView = () => {
 
   const fetchTopic = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: topicData, error } = await supabase
         .from('topics')
         .select(`
-          *,
-          profiles (display_name, username),
-          categories (name, color)
+          id, title, content, view_count, reply_count, like_count,
+          created_at, author_id, category_id
         `)
         .eq('slug', slug)
         .eq('status', 'published')
         .single();
 
       if (error) throw error;
-      setTopic(data);
+
+      // Get author and category info separately
+      const [authorResult, categoryResult] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', topicData.author_id)
+          .single(),
+        supabase
+          .from('categories')
+          .select('name, color')
+          .eq('id', topicData.category_id)
+          .single()
+      ]);
+
+      const transformedTopic: Topic = {
+        id: topicData.id,
+        title: topicData.title,
+        content: topicData.content,
+        view_count: topicData.view_count || 0,
+        reply_count: topicData.reply_count || 0,
+        like_count: topicData.like_count || 0,
+        created_at: topicData.created_at,
+        author_id: topicData.author_id,
+        author_name: authorResult.data?.display_name || "مستخدم مجهول",
+        category_name: categoryResult.data?.name || "",
+        category_color: categoryResult.data?.color || "#3B82F6"
+      };
+
+      setTopic(transformedTopic);
 
       // زيادة عدد المشاهدات
       await supabase
         .from('topics')
-        .update({ view_count: (data.view_count || 0) + 1 })
-        .eq('id', data.id);
+        .update({ view_count: (topicData.view_count || 0) + 1 })
+        .eq('id', topicData.id);
     } catch (error) {
       console.error('Error fetching topic:', error);
       navigate('/');
@@ -96,18 +116,38 @@ const TopicView = () => {
         .single();
 
       if (topicData) {
-        const { data, error } = await supabase
+        const { data: commentsData, error } = await supabase
           .from('comments')
           .select(`
-            *,
-            profiles (display_name, username)
+            id, content, created_at, author_id, like_count
           `)
           .eq('topic_id', topicData.id)
           .eq('status', 'approved')
           .order('created_at', { ascending: true });
 
         if (error) throw error;
-        setReplies(data || []);
+
+        // Get author names separately
+        const authorIds = commentsData?.map(c => c.author_id) || [];
+        const uniqueAuthorIds = [...new Set(authorIds)];
+
+        const { data: authors } = await supabase
+          .from('profiles')
+          .select('id, display_name')
+          .in('id', uniqueAuthorIds);
+
+        const authorMap = new Map(authors?.map(a => [a.id, a.display_name]) || []);
+
+        const transformedReplies: Reply[] = (commentsData || []).map(comment => ({
+          id: comment.id,
+          content: comment.content,
+          created_at: comment.created_at,
+          author_id: comment.author_id,
+          like_count: comment.like_count || 0,
+          author_name: authorMap.get(comment.author_id) || "مستخدم مجهول"
+        }));
+
+        setReplies(transformedReplies);
       }
     } catch (error) {
       console.error('Error fetching replies:', error);
@@ -195,25 +235,23 @@ const TopicView = () => {
         <Card className="shadow-lg">
           <CardHeader>
             <div className="flex items-center gap-2 mb-4">
-              {topic.categories && (
-                <Badge 
-                  variant="secondary"
-                  style={{ backgroundColor: `${topic.categories.color}20`, color: topic.categories.color }}
-                >
-                  {topic.categories.name}
-                </Badge>
-              )}
+              <Badge 
+                variant="secondary"
+                style={{ backgroundColor: `${topic?.category_color}20`, color: topic?.category_color }}
+              >
+                {topic?.category_name}
+              </Badge>
             </div>
-            <h1 className="text-2xl font-bold text-gray-800">{topic.title}</h1>
+            <h1 className="text-2xl font-bold text-gray-800">{topic?.title}</h1>
             <div className="flex items-center gap-4 text-sm text-gray-500">
               <div className="flex items-center gap-1">
                 <User className="w-4 h-4" />
-                <span>{topic.profiles?.display_name || "مستخدم مجهول"}</span>
+                <span>{topic?.author_name}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
                 <span>
-                  {formatDistanceToNow(new Date(topic.created_at), {
+                  {topic && formatDistanceToNow(new Date(topic.created_at), {
                     addSuffix: true,
                     locale: ar
                   })}
@@ -221,20 +259,20 @@ const TopicView = () => {
               </div>
               <div className="flex items-center gap-1">
                 <Eye className="w-4 h-4" />
-                <span>{topic.view_count}</span>
+                <span>{topic?.view_count}</span>
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <div className="prose max-w-none">
               <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {topic.content}
+                {topic?.content}
               </p>
             </div>
             <div className="flex items-center gap-4 mt-6 pt-4 border-t">
               <Button variant="ghost" size="sm">
                 <ThumbsUp className="w-4 h-4 ml-1" />
-                {topic.like_count}
+                {topic?.like_count}
               </Button>
               <div className="flex items-center gap-1 text-gray-500">
                 <MessageSquare className="w-4 h-4" />
@@ -254,13 +292,13 @@ const TopicView = () => {
                 <div className="flex items-start gap-3">
                   <Avatar className="w-8 h-8">
                     <AvatarFallback className="bg-green-100 text-green-700 text-sm">
-                      {reply.profiles?.display_name?.slice(0, 2) || "عض"}
+                      {reply.author_name.slice(0, 2)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="font-medium text-gray-800">
-                        {reply.profiles?.display_name || "مستخدم مجهول"}
+                        {reply.author_name}
                       </span>
                       <span className="text-xs text-gray-500">
                         {formatDistanceToNow(new Date(reply.created_at), {
@@ -273,7 +311,7 @@ const TopicView = () => {
                     <div className="mt-2">
                       <Button variant="ghost" size="sm">
                         <ThumbsUp className="w-3 h-3 ml-1" />
-                        {reply.like_count || 0}
+                        {reply.like_count}
                       </Button>
                     </div>
                   </div>

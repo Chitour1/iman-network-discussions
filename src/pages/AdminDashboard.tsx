@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,7 +61,7 @@ const AdminDashboard = () => {
         return;
       }
 
-      // Check if user is admin (you can implement role-based access)
+      // Check if user is admin
       const { data: profile } = await supabase
         .from('profiles')
         .select('is_admin')
@@ -79,6 +78,7 @@ const AdminDashboard = () => {
       }
     } catch (error) {
       console.error('Error checking admin access:', error);
+      window.location.href = '/';
     }
   };
 
@@ -116,41 +116,53 @@ const AdminDashboard = () => {
 
   const fetchPendingItems = async () => {
     try {
-      // Fetch pending topics
+      // Fetch pending topics with author info
       const { data: pendingTopics } = await supabase
         .from('topics')
         .select(`
           id, title, content, created_at,
-          profiles (display_name)
+          author_id
         `)
         .eq('status', 'pending')
         .order('created_at', { ascending: false })
         .limit(5);
 
-      // Fetch pending comments
+      // Fetch pending comments with author info
       const { data: pendingComments } = await supabase
         .from('comments')
         .select(`
           id, content, created_at,
-          profiles (display_name)
+          author_id
         `)
         .eq('status', 'pending')
         .order('created_at', { ascending: false })
         .limit(5);
+
+      // Get author names separately
+      const topicAuthorIds = pendingTopics?.map(t => t.author_id) || [];
+      const commentAuthorIds = pendingComments?.map(c => c.author_id) || [];
+      const allAuthorIds = [...new Set([...topicAuthorIds, ...commentAuthorIds])];
+
+      const { data: authors } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', allAuthorIds);
+
+      const authorMap = new Map(authors?.map(a => [a.id, a.display_name]) || []);
 
       const allPending: PendingItem[] = [
         ...(pendingTopics || []).map(topic => ({
           id: topic.id,
           title: topic.title,
           content: topic.content,
-          author_name: topic.profiles?.display_name || 'مجهول',
+          author_name: authorMap.get(topic.author_id) || 'مجهول',
           created_at: topic.created_at,
           type: 'topic' as const
         })),
         ...(pendingComments || []).map(comment => ({
           id: comment.id,
           content: comment.content,
-          author_name: comment.profiles?.display_name || 'مجهول',
+          author_name: authorMap.get(comment.author_id) || 'مجهول',
           created_at: comment.created_at,
           type: 'comment' as const
         }))

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +10,14 @@ import { ar } from "date-fns/locale";
 import { getContentPreview } from "@/utils/textUtils";
 import ForumLayout from "@/components/forum/ForumLayout";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 interface Category {
   id: string;
@@ -139,14 +146,25 @@ const CategoryView = () => {
   return (
     <ForumLayout session={session}>
       <div className="space-y-6">
+        {/* Breadcrumbs */}
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/" className="font-semibold text-base">
+                شبكة الساحات للحوار الإسلامي الحر
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage className="font-semibold text-base">
+                {category?.name || ""}
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate('/')}>
-              <ArrowLeft className="w-4 h-4 ml-2" />
-              العودة
-            </Button>
-          </div>
+        <div className="flex items-center justify-end">
           <Button onClick={handleCreateTopic} className="bg-green-600 hover:bg-green-700">
             <Plus className="w-4 h-4 ml-2" />
             موضوع جديد

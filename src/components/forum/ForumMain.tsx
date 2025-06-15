@@ -173,9 +173,10 @@ const ForumMain = () => {
   };
   const fetchLatestTopics = async () => {
     try {
-      const { data, error } = await supabase
-        .from('topics')
-        .select(`
+      const {
+        data,
+        error
+      } = await supabase.from('topics').select(`
             id,
             title,
             content,
@@ -189,10 +190,9 @@ const ForumMain = () => {
             slug,
             profiles (display_name, username, avatar_url, bio),
             categories (name, color)
-          `)
-        .eq('status', 'published')
-        .order('created_at', { ascending: false })
-        .limit(10);
+          `).eq('status', 'published').order('created_at', {
+        ascending: false
+      }).limit(10);
       if (error) throw error;
 
       // Map to the Topic interface
@@ -230,7 +230,6 @@ const ForumMain = () => {
             };
           }
         }
-
         return {
           id: item.id,
           title: item.title,
@@ -244,7 +243,7 @@ const ForumMain = () => {
           category_id: item.category_id,
           slug: item.slug,
           profiles,
-          categories,
+          categories
         };
       });
       setLatestTopics(transformedData);
@@ -266,14 +265,14 @@ const ForumMain = () => {
   };
   const fetchTopMembers = async () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, display_name, post_count, reputation_score, username')
-        .eq('is_banned', false)
-        .order('post_count', { ascending: false })
-        .order('reputation_score', { ascending: false })
-        .limit(5);
-
+      const {
+        data,
+        error
+      } = await supabase.from('profiles').select('id, display_name, post_count, reputation_score, username').eq('is_banned', false).order('post_count', {
+        ascending: false
+      }).order('reputation_score', {
+        ascending: false
+      }).limit(5);
       if (error) throw error;
       setTopMembers(data || []);
     } catch (error) {
@@ -282,13 +281,14 @@ const ForumMain = () => {
   };
   const fetchLatestMember = async () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, display_name, username')
-        .order('joined_at', { ascending: false })
-        .limit(1);
+      const {
+        data,
+        error
+      } = await supabase.from('profiles').select('id, display_name, username').order('joined_at', {
+        ascending: false
+      }).limit(1);
       if (error) throw error;
-      setLatestMember((data && data[0]) ? data[0] : null);
+      setLatestMember(data && data[0] ? data[0] : null);
     } catch (error) {
       console.error('Error fetching latest member:', error);
     }
@@ -329,12 +329,8 @@ const ForumMain = () => {
             <CardContent className="px-0">
               <Carousel>
                 <CarouselContent>
-                  {(latestTopics.length ? latestTopics : topics).slice(0, 10).map((topic) => (
-                    <CarouselItem key={topic.id} className="basis-1/2 p-2">
-                      <div
-                        onClick={() => handleTopicClick(topic.slug)}
-                        className="cursor-pointer bg-white hover:bg-green-50 border border-green-100 rounded-lg p-4 flex gap-3 items-center transition"
-                      >
+                  {(latestTopics.length ? latestTopics : topics).slice(0, 10).map(topic => <CarouselItem key={topic.id} className="basis-1/2 p-2">
+                      <div onClick={() => handleTopicClick(topic.slug)} className="cursor-pointer bg-white hover:bg-green-50 border border-green-100 rounded-lg p-4 flex gap-3 items-center transition">
                         <Avatar className="w-9 h-9 shrink-0">
                           <AvatarImage src={topic.profiles?.avatar_url ?? undefined} />
                           <AvatarFallback>
@@ -346,12 +342,14 @@ const ForumMain = () => {
                             {topic.title}
                           </div>
                           <div className="text-xs text-gray-500">
-                            {formatDistanceToNow(new Date(topic.created_at), { addSuffix: true, locale: ar })}
+                            {formatDistanceToNow(new Date(topic.created_at), {
+                          addSuffix: true,
+                          locale: ar
+                        })}
                           </div>
                         </div>
                       </div>
-                    </CarouselItem>
-                  ))}
+                    </CarouselItem>)}
                 </CarouselContent>
                 <CarouselPrevious />
                 <CarouselNext />
@@ -363,8 +361,8 @@ const ForumMain = () => {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">أحدث المواضيع</h1>
-            <p className="text-gray-600">تابع آخر النقاشات والمواضيع في المنتدى</p>
+            
+            
           </div>
           <Button onClick={handleCreateTopic} className="bg-green-600 hover:bg-green-700">
             <Plus className="w-4 h-4 ml-2" />
@@ -493,35 +491,20 @@ const ForumMain = () => {
               </span>
             </div>
             <div className="text-sm flex flex-wrap justify-center gap-2">
-              {topMembers && topMembers.length > 0 ? topMembers.map(member => (
-                <button
-                  key={member.id}
-                  className="font-semibold underline rounded px-2 py-1 text-green-800 hover:text-green-600 focus:outline-none"
-                  type="button"
-                  onClick={() => handleMemberClick(member.username)}
-                  title={'عدد مواضيعه: ' + (member.post_count || 0) + '، تقييمه: ' + (member.reputation_score || 0)}
-                >
+              {topMembers && topMembers.length > 0 ? topMembers.map(member => <button key={member.id} className="font-semibold underline rounded px-2 py-1 text-green-800 hover:text-green-600 focus:outline-none" type="button" onClick={() => handleMemberClick(member.username)} title={'عدد مواضيعه: ' + (member.post_count || 0) + '، تقييمه: ' + (member.reputation_score || 0)}>
                   {member.display_name || 'عضو'}
-                </button>
-              )) : <span className="text-gray-400">لا يوجد أعضاء بارزون حاليا</span>}
+                </button>) : <span className="text-gray-400">لا يوجد أعضاء بارزون حاليا</span>}
             </div>
           </div>
           {/* أحدث عضو */}
           <div className="flex-1 mt-4 md:mt-0 md:text-left">
             <div className="text-sm text-blue-700">
-              {latestMember &&
-                <>
+              {latestMember && <>
                   نرحب بعضونا الجديد:
-                  <button
-                    className="inline font-semibold underline ml-1 text-blue-900 hover:text-green-600 focus:outline-none"
-                    type="button"
-                    onClick={() => handleMemberClick(latestMember.username)}
-                    title="عرض الملف الشخصي"
-                  >
+                  <button className="inline font-semibold underline ml-1 text-blue-900 hover:text-green-600 focus:outline-none" type="button" onClick={() => handleMemberClick(latestMember.username)} title="عرض الملف الشخصي">
                     {latestMember.display_name}
                   </button>
-                </>
-              }
+                </>}
             </div>
           </div>
         </div>

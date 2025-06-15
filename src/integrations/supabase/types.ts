@@ -413,6 +413,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "topics_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "topics_category_id_fkey"
             columns: ["category_id"]
             isOneToOne: false

@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -52,50 +53,25 @@ function FeedTopicModal({
   author: ProfileData | null,
   goToFullView: () => void
 }) {
-  const modalRef = useRef<HTMLDivElement>(null);
-
-  // إغلاق عند الضغط خارج المودال
-  useEffect(() => {
-    if (!show) return;
-    function handleClick(e: MouseEvent) {
-      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [show, onClose]);
-
   if (!show || !topic) return null;
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div
-        ref={modalRef}
-        className="bg-white rounded-lg p-6 max-w-lg w-full relative shadow-lg"
-        style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}
-      >
+      <div className="bg-white rounded-lg p-6 max-w-lg w-full relative shadow-lg">
         <button
           aria-label="إغلاق"
           onClick={onClose}
           className="absolute left-2 top-2 bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center"
         >✖</button>
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-9 h-9 rounded-full bg-pink-200 flex items-center justify-center text-pink-600 text-lg font-bold overflow-hidden">
+          <div className="w-9 h-9 rounded-full bg-pink-200 flex items-center justify-center text-pink-600 text-lg font-bold">
             {author?.display_name?.charAt(0) || author?.username?.charAt(0) || "م"}
           </div>
-          <span className="font-semibold text-pink-700">
-            {author?.display_name || author?.username || "مستخدم"}
-          </span>
+          <span className="font-semibold text-pink-700">{author?.display_name || author?.username || "مستخدم"}</span>
           <span className="text-xs text-gray-400 ml-2">{new Date(topic.created_at).toLocaleDateString()}</span>
         </div>
-        {/* نص التغريدة بشكل عادي مع تمرير */}
-        <div
-          className="text-gray-700 mb-4 overflow-auto"
-          style={{ maxHeight: "45vh", whiteSpace: "pre-line", fontFamily: "inherit" }}
-        >
-          {topic.content}
-        </div>
-        <div className="flex gap-2 items-center mt-auto">
+        {/* نص التغريدة بنص خام بدون تنسيقات */}
+        <div className="text-gray-700 mb-4">{topic.content}</div>
+        <div className="flex gap-2 items-center">
           <Button variant="secondary" onClick={goToFullView}>
             عرض كامل في المنتدى
           </Button>
@@ -264,7 +240,7 @@ export default function Feed() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(to bottom, #e0edfa 60%, #f8fafc 100%)" }} dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50" dir="rtl">
       <div className="max-w-xl mx-auto py-10">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -312,7 +288,7 @@ export default function Feed() {
                   >
                     {/* الكاتب */}
                     <div className="flex items-center gap-3 mb-2">
-                      <div className="w-8 h-8 bg-pink-200 rounded-full flex items-center justify-center text-sm text-pink-700 overflow-hidden">
+                      <div className="w-8 h-8 bg-pink-200 rounded-full flex items-center justify-center text-sm text-pink-700">
                         {author?.display_name?.charAt(0) || author?.username?.charAt(0) || "م"}
                       </div>
                       <span className="font-semibold text-pink-700">
@@ -343,13 +319,8 @@ export default function Feed() {
                     </div>
                     {/* العنوان */}
                     <div className="font-bold text-xl text-gray-800 mb-2">{topic.title}</div>
-                    {/* المحتوى بشكل عادي جدًا بدون أكواد HTML */}
-                    <div
-                      className="text-gray-600 mb-2 line-clamp-3"
-                      style={{ whiteSpace: "pre-line", fontFamily: "inherit" }}
-                    >
-                      {topic.content}
-                    </div>
+                    {/* المحتوى بدون تنسيقات */}
+                    <div className="text-gray-600 mb-2 line-clamp-3">{topic.content}</div>
                     {/* أزرار التفاعل */}
                     <div className="flex items-center gap-4 mt-3">
                       <button

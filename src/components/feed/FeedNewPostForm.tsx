@@ -6,9 +6,6 @@ import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 import { stripHtml } from "@/utils/textUtils";
 
-// ✨ ضع هنا uuid تصنيف المنصة الخاص بك:
-const FEED_CATEGORY_ID = "b0dde55b-3f8d-47db-9bf5-d5056e2bfbcb"; // <-- هذا هو المعرّف الصحيح
-
 interface FeedNewPostFormProps {
   onCreated: () => void
 }
@@ -19,69 +16,41 @@ export default function FeedNewPostForm({ onCreated }: FeedNewPostFormProps) {
   const [loading, setLoading] = useState(false);
 
   function cleanText(val: string) {
+    // أزل أكواد HTML وفصّل الأسطر المكررة، وأزل المسافات الزائدة
     let txt = val.replace(/<br\s*\/?>/gi, "\n").replace(/\r\n|\r|\n/g, "\n");
-    txt = txt.replace(/^[\s\n\r]+|[\s\n\r]+$/g, "");
+    txt = txt.replace(/^[\s\n\r]+|[\s\n\r]+$/g, ""); // from start/end
+    // strip html tags to ensure it's just plain text
     return stripHtml ? stripHtml(txt) : txt;
   }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!user) {
-      toast({ title: "يرجى تسجيل الدخول" });
+    if (!user) return;
+    const pureTitle = cleanText(title);
+    const pureContent = cleanText(content);
+    if (!pureTitle || !pureContent) {
+      toast({ title: "العنوان والمحتوى مطلوبان" });
       return;
     }
     setLoading(true);
-
-    const pureTitle = cleanText(title);
-    const pureContent = cleanText(content);
-
-    if (!pureTitle || !pureContent) {
-      toast({ title: "العنوان والمحتوى مطلوبان" });
-      setLoading(false);
-      return;
-    }
-
-    // وضّح القيم المرسلة (للتنقيح)
-    console.log("Creating feed post", {
+    // slug بسيط: جزء من العنوان + أرقام عشوائية
+    const slug = (pureTitle.replace(/\s+/g, "-").slice(0, 24) + "-" + Math.floor(Math.random() * 1e5)).toLowerCase();
+    const { error } = await supabase.from("topics").insert({
       title: pureTitle,
       content: pureContent,
       author_id: user.id,
-      category_id: FEED_CATEGORY_ID,
+      category_id: "feed-only", // فئة وهمية/خاصة للمنصة (يمكن تخصيصها لاحقًا)
+      slug,
+      status: "published",
+      is_feed_only: true
     });
-
-    try {
-      const slug = (pureTitle.replace(/\s+/g, "-").slice(0, 24) + "-" + Math.floor(Math.random() * 1e5)).toLowerCase();
-      const { error } = await supabase.from("topics").insert({
-        title: pureTitle,
-        content: pureContent,
-        author_id: user.id,
-        category_id: FEED_CATEGORY_ID,
-        slug,
-        status: "published",
-        is_feed_only: true,
-      });
-
-      if (error) {
-        console.error("Feed post error", error);
-        toast({
-          title: "خطأ في النشر",
-          description: error.message || "تعذر نشر المنشور. قد تكون هناك مشكلة اتصال أو نقص في الصلاحيات.",
-          variant: "destructive",
-        });
-      } else {
-        toast({ title: "تم نشر منشورك في منصة الساحة فقط" });
-        setTitle("");
-        setContent("");
-        if (onCreated) onCreated();
-      }
-    } catch (err) {
-      // التقاط أي خطأ غير متوقع
-      console.error("Feed post exception", err);
-      toast({
-        title: "خطأ داخلي غير متوقع",
-        description: (err as Error).message || "حدثت مشكلة غير معروفة أثناء النشر.",
-        variant: "destructive",
-      });
+    if (error) {
+      toast({ title: "خطأ", description: "تعذر نشر المنشور. " + (error.message || "") });
+    } else {
+      toast({ title: "تم نشر منشورك في منصة الساحة فقط" });
+      setTitle("");
+      setContent("");
+      onCreated();
     }
     setLoading(false);
   }

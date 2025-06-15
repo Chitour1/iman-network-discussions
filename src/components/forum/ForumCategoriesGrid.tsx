@@ -12,7 +12,8 @@ import {
   Shield,
   Heart,
   Megaphone,
-  UserPlus
+  UserPlus,
+  Eye
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -24,6 +25,9 @@ interface Category {
   color: string;
   icon: string;
   topic_count: number;
+  comment_count: number;
+  view_count: number;
+  recent_topics_count: number;
 }
 
 const iconMap: { [key: string]: any } = {
@@ -38,7 +42,8 @@ const iconMap: { [key: string]: any } = {
   UserPlus,
   TrendingUp,
   Calendar,
-  Settings
+  Settings,
+  Eye
 };
 
 type Props = {
@@ -60,21 +65,42 @@ const ForumCategoriesGrid: React.FC<Props> = ({ categories }) => {
           return (
             <div
               key={cat.id}
-              className="bg-white rounded-lg border shadow-sm p-4 flex items-start gap-4 hover:shadow-md transition cursor-pointer group"
+              className="bg-white rounded-lg border shadow-sm p-4 flex flex-col justify-between hover:shadow-md transition cursor-pointer group"
               onClick={() => navigate(`/category/${cat.slug}`)}
             >
-              <div
-                className="rounded-full p-2 bg-gradient-to-br from-gray-50 to-gray-100 border"
-                style={{ color: cat.color }}
-              >
-                <Icon className="w-7 h-7" />
-              </div>
-              <div>
-                <div className="flex items-center gap-1">
-                  <h3 className="font-semibold text-gray-800 text-lg group-hover:text-green-600">{cat.name}</h3>
-                  <span className="ml-1 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{cat.topic_count}</span>
+              <div className="flex items-start gap-4">
+                <div
+                  className="rounded-full p-2 bg-gradient-to-br from-gray-50 to-gray-100 border"
+                  style={{ color: cat.color }}
+                >
+                  <Icon className="w-7 h-7" />
                 </div>
-                <p className="text-gray-500 text-sm mt-1 line-clamp-2">{cat.description}</p>
+                <div>
+                  <div className="flex items-center gap-1">
+                    <h3 className="font-semibold text-gray-800 text-lg group-hover:text-green-600">{cat.name}</h3>
+                  </div>
+                  <p className="text-gray-500 text-sm mt-1 line-clamp-2">{cat.description}</p>
+                </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-around text-xs text-gray-600">
+                <div className="flex flex-col items-center gap-1" title="المواضيع">
+                  <span className="font-semibold">{cat.topic_count || 0}</span>
+                  <span className="text-gray-400">المواضيع</span>
+                </div>
+                <div className="flex flex-col items-center gap-1" title="التعليقات">
+                  <span className="font-semibold">{cat.comment_count || 0}</span>
+                  <span className="text-gray-400">التعليقات</span>
+                </div>
+                <div className="flex flex-col items-center gap-1" title="المشاهدات">
+                  <span className="font-semibold">{cat.view_count || 0}</span>
+                  <span className="text-gray-400">المشاهدات</span>
+                </div>
+                {cat.recent_topics_count > 0 && (
+                  <div className="flex flex-col items-center gap-1 text-green-600" title="مواضيع جديدة">
+                    <span className="font-semibold">{cat.recent_topics_count}</span>
+                    <span className="text-green-500">جديدة</span>
+                  </div>
+                )}
               </div>
             </div>
           );

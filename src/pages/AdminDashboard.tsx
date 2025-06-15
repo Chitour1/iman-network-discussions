@@ -61,14 +61,15 @@ const AdminDashboard = () => {
         return;
       }
 
-      // Check if user is admin
+      // Check if user has admin role - for now we'll allow access until the admin system is properly set up
       const { data: profile } = await supabase
         .from('profiles')
-        .select('is_admin')
+        .select('role')
         .eq('id', user.user.id)
         .single();
 
-      if (!profile?.is_admin) {
+      // Temporarily allow users with 'admin' role in the role field
+      if (profile?.role !== 'admin') {
         toast({
           title: "غير مصرح",
           description: "ليس لديك صلاحية للوصول إلى لوحة الإدارة",

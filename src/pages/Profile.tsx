@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,14 +57,26 @@ const Profile = () => {
       const { data, error } = await supabase
         .from('profiles')
         .select(`
-          id, display_name, username, bio, avatar_url, created_at,
-          total_topics, total_comments, reputation_score
+          id, display_name, username, bio, avatar_url, created_at, reputation_score
         `)
         .eq('id', user.user.id)
         .single();
 
       if (error) throw error;
       
+      // Calculate topic and comment counts manually for now
+      const { count: topicCount } = await supabase
+        .from('topics')
+        .select('*', { count: 'exact' })
+        .eq('author_id', user.user.id)
+        .eq('status', 'published');
+
+      const { count: commentCount } = await supabase
+        .from('comments')
+        .select('*', { count: 'exact' })
+        .eq('author_id', user.user.id)
+        .eq('status', 'approved');
+
       const transformedProfile: UserProfile = {
         id: data.id,
         display_name: data.display_name || "",
@@ -73,8 +84,8 @@ const Profile = () => {
         bio: data.bio || "",
         avatar_url: data.avatar_url || "",
         created_at: data.created_at,
-        total_topics: data.total_topics || 0,
-        total_comments: data.total_comments || 0,
+        total_topics: topicCount || 0,
+        total_comments: commentCount || 0,
         reputation_score: data.reputation_score || 0
       };
 

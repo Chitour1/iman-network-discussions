@@ -1,10 +1,9 @@
-
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/toaster";
+import { toast } from "@/components/ui/use-toast";
 
 /**
  * إعدادات المنتدى العامة (الاسم، الوصف، اللغة...)
@@ -138,4 +137,3 @@ const AdminGeneralSettings = () => {
 };
 
 export default AdminGeneralSettings;
-

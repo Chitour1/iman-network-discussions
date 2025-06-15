@@ -23,10 +23,12 @@ interface FeedTopic {
     color: string;
     slug: string;
   } | null;
-  profiles: {
+  // profiles لم تعد مستخدمة مباشرة لحين إصلاح الربط
+  profiles?: {
     display_name: string;
     avatar_url: string | null;
   } | null;
+  author_id?: string | null;
 }
 
 const Feed = () => {
@@ -44,17 +46,16 @@ const Feed = () => {
   // مبدأيًا: "تتابعه" تسحب كل المواضيع، لاحقًا إذا تم بناء متابعة مستخدمين نقوم بفلترتها
   async function fetchFeed() {
     setLoading(true);
-    // جلب أحدث المواضيع
+    // جلب أحدث المواضيع بدون profiles
     const { data, error } = await supabase
       .from("topics")
       .select(`
-        id, title, content, created_at, like_count, reply_count, slug,
-        categories ( name, color, slug ),
-        profiles ( display_name, avatar_url )
+        id, title, content, created_at, like_count, reply_count, slug, author_id,
+        categories ( name, color, slug )
       `)
       .eq("status", "published")
       .order("created_at", { ascending: false })
-      .limit(30); // يمكن التوسيع لاحقًا للـ infinite scroll
+      .limit(30);
 
     if (!error && data) setTopics(data as FeedTopic[]);
     setLoading(false);
@@ -66,7 +67,6 @@ const Feed = () => {
       navigate("/profile"); // تحويل لتسجيل الدخول أو صفحة البروفايل
       return;
     }
-    // طلب مباشر يسجل الإعجاب في جدول المنتدى الأصلي
     await supabase.from("likes").insert({
       topic_id: topicId,
       user_id: user.id,
@@ -77,10 +77,9 @@ const Feed = () => {
 
   const handleComment = (topic: FeedTopic) => {
     if (!user) {
-      navigate("/profile"); // أو صفحة التسجيل
+      navigate("/profile");
       return;
     }
-    // الانتقال مباشرة لصفحة الموضوع الأصلية مع التركيز على التعليقات
     navigate(`/topic/${topic.slug}#comments`);
   };
 
@@ -100,7 +99,6 @@ const Feed = () => {
             <FeedList topics={topics} loading={loading} user={user} onLike={handleLike} onComment={handleComment} />
           </TabsContent>
           <TabsContent value="following" className="p-0">
-            {/* لاحقًا: عندما يتم بناء نظام المتابعة. الآن فقط ملاحظة للعضو. */}
             <div className="py-8">
               <p className="text-gray-700 text-center">ميزة "تتابعه" ستتاح قريبًا بعد دعم متابعة المستخدمين! حاليًا تظهر كل المواضيع.</p>
               <FeedList topics={topics} loading={loading} user={user} onLike={handleLike} onComment={handleComment} />
@@ -130,7 +128,6 @@ function FeedList({ topics, loading, user, onLike, onComment }: {
         <Card key={topic.id} className="shadow border">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-3">
-              {/* القسم */}
               {topic.categories && (
                 <Badge
                   variant="secondary"
@@ -144,20 +141,17 @@ function FeedList({ topics, loading, user, onLike, onComment }: {
                 </Badge>
               )}
             </div>
-            {/* العنوان */}
             <h2
               className="font-bold text-lg mb-2 cursor-pointer hover:text-green-700"
               onClick={() => window.open(`/topic/${topic.slug}`, "_self")}
             >
               {topic.title}
             </h2>
-            {/* مقتطف النص */}
             <p className="text-gray-700 mb-3">{getContentPreview(topic.content, 90)}</p>
-            {/* صاحب الموضوع */}
             <div className="flex items-center gap-2 text-xs text-gray-500 my-2">
-              {topic.profiles?.display_name ? topic.profiles.display_name : "مستخدم"}
+              {/* بما أن profiles غير متوفرة حالياً: */}
+              {"مستخدم"}
             </div>
-            {/* أزرار التفاعل */}
             <div className="flex items-center gap-3 mt-2">
               <Button
                 variant="ghost"
@@ -194,4 +188,3 @@ function FeedList({ topics, loading, user, onLike, onComment }: {
 }
 
 export default Feed;
-

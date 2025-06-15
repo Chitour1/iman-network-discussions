@@ -1,3 +1,4 @@
+
 import { useState, useRef, useMemo } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -37,7 +38,7 @@ import {
   Minus,
   Hash,
   Settings,
-  Eraser as RemoveFormatting,
+  Eraser,
   Table,
   Subscript,
   Superscript,

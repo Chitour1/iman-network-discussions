@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Bell, Search, Settings, LogOut, User, Building, LogIn } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 interface ForumHeaderProps {
   session: Session | null;
@@ -32,7 +32,7 @@ const ForumHeader = ({ session }: ForumHeaderProps) => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           
-          <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3 no-underline text-inherit hover:opacity-90 transition-opacity">
             <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-blue-600 rounded-full flex items-center justify-center">
               <Building className="w-6 h-6 text-white" />
             </div>
@@ -40,7 +40,7 @@ const ForumHeader = ({ session }: ForumHeaderProps) => {
               <h1 className="text-xl font-bold text-gray-800">شبكة الساحات</h1>
               <p className="text-sm text-gray-600">للنقاش الإسلامي الحر</p>
             </div>
-          </div>
+          </Link>
         </div>
 
         <div className="flex items-center gap-4">

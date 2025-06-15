@@ -135,13 +135,12 @@ const WysiwygEditor = ({
   const handleImageInsert = (url: string, alt: string) => {
     const quill = getQuill();
     if (quill) {
-      const range = quill.getSelection();
-      if (range) {
-        // Insert image with proper attributes
-        quill.insertEmbed(range.index, 'image', url);
-        // Move cursor after the image
-        quill.setSelection(range.index + 1);
-      }
+      const range = quill.getSelection(true) || { index: quill.getLength(), length: 0 };
+      // ندرج الصورة كعنصر HTML img بدلاً من insertEmbed فقط
+      const html = `<p style="text-align:center;"><img src="${url}" alt="${alt || 'صورة'}" style="max-width:100%;display:inline-block;" /></p>`;
+      quill.clipboard.dangerouslyPasteHTML(range.index, html, 'user');
+      quill.setSelection(range.index + 1, 0, "user");
+      console.log("[WYSIWYG] Image inserted:", { url, alt }); // للمساعدة في تعقب الأخطاء
     }
   };
 

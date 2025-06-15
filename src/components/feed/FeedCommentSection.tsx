@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -102,6 +101,16 @@ export default function FeedCommentSection({ topicId, autoFocusInput = false }: 
     setLoading(false);
   }
 
+  function plainComment(content: string): string {
+    // إزالة أكواد التنسيق وتحويل <br> أو <br/> إلى فاصل أسطر
+    // ثم نظف باقي أكواد الـ HTML
+    let c = content
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/(\r\n|\r|\n)/g, '\n'); // توحيد جميع أنواع فواصل الأسطر
+    c = stripHtml(c);
+    return c;
+  }
+
   return (
     <div className="mt-6 rounded-xl bg-gray-50 px-4 py-3">
       <h4 className="text-sm mb-2 font-semibold text-pink-700 flex items-center gap-1">
@@ -121,7 +130,9 @@ export default function FeedCommentSection({ topicId, autoFocusInput = false }: 
                   <span className="text-pink-700 font-semibold text-xs">{author?.display_name || author?.username || "مستخدم"}</span>
                   <span className="text-xs text-gray-400">{new Date(comment.created_at).toLocaleDateString()}</span>
                 </div>
-                <div className="mt-1 text-sm text-gray-700 whitespace-pre-line">{stripHtml(comment.content)}</div>
+                <div className="mt-1 text-sm text-gray-700 whitespace-pre-line">
+                  {plainComment(comment.content)}
+                </div>
               </div>
             </div>
           );

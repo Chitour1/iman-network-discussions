@@ -1,3 +1,5 @@
+
+import React, { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,6 +16,9 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminSettings from "./pages/AdminSettings";
 import NotFound from "./pages/NotFound";
 
+// Lazy load the user profile page
+const UserProfilePage = lazy(() => import("./pages/user/[username].tsx"));
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -25,18 +30,29 @@ const App = () => (
         <BrowserRouter>
           <div className="min-h-screen bg-gray-50">
             <main>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/feed" element={<Feed />} />
-                <Route path="/create-topic" element={<CreateTopic />} />
-                <Route path="/topic/:slug" element={<TopicView />} />
-                <Route path="/category/:slug" element={<CategoryView />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/settings" element={<AdminSettings />} />
-                <Route path="/u/:username" element={<(await import('./pages/user/[username].tsx')).default />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <Suspense
+                fallback={
+                  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+                      <p className="text-gray-600">جاري التحميل...</p>
+                    </div>
+                  </div>
+                }
+              >
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/feed" element={<Feed />} />
+                  <Route path="/create-topic" element={<CreateTopic />} />
+                  <Route path="/topic/:slug" element={<TopicView />} />
+                  <Route path="/category/:slug" element={<CategoryView />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/admin/settings" element={<AdminSettings />} />
+                  <Route path="/u/:username" element={<UserProfilePage />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
             </main>
           </div>
         </BrowserRouter>
@@ -46,3 +62,4 @@ const App = () => (
 );
 
 export default App;
+

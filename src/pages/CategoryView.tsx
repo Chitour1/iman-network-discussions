@@ -142,7 +142,7 @@ const CategoryView = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate(-1)}>
+            <Button variant="ghost" onClick={() => navigate('/')}>
               <ArrowLeft className="w-4 h-4 ml-2" />
               العودة
             </Button>

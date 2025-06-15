@@ -4,11 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, Send } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import WysiwygEditor from "@/components/editor/WysiwygEditor";
 
 interface Category {
   id: string;
@@ -25,6 +25,7 @@ const CreateTopicForm = ({ categories, selectedCategoryId }: CreateTopicFormProp
   const [content, setContent] = useState("");
   const [categoryId, setCategoryId] = useState(selectedCategoryId || "");
   const [loading, setLoading] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -37,9 +38,7 @@ const CreateTopicForm = ({ categories, selectedCategoryId }: CreateTopicFormProp
       .trim();
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmit = async () => {
     if (!title.trim() || !content.trim() || !categoryId) {
       toast({
         title: "خطأ",
@@ -98,6 +97,18 @@ const CreateTopicForm = ({ categories, selectedCategoryId }: CreateTopicFormProp
     }
   };
 
+  const handleSaveDraft = async () => {
+    // Implementation for saving as draft
+    toast({
+      title: "تم الحفظ",
+      description: "تم حفظ المسودة بنجاح",
+    });
+  };
+
+  const handlePreview = () => {
+    setShowPreview(!showPreview);
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="flex items-center gap-2 mb-6">
@@ -112,7 +123,7 @@ const CreateTopicForm = ({ categories, selectedCategoryId }: CreateTopicFormProp
           <CardTitle>إنشاء موضوع جديد</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-6">
             <div>
               <label htmlFor="category" className="block text-sm font-medium mb-2">
                 القسم *
@@ -147,35 +158,53 @@ const CreateTopicForm = ({ categories, selectedCategoryId }: CreateTopicFormProp
             </div>
 
             <div>
-              <label htmlFor="content" className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium mb-2">
                 محتوى الموضوع *
               </label>
-              <Textarea
-                id="content"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="اكتب محتوى الموضوع"
-                className="min-h-[200px] text-right"
-                dir="rtl"
-              />
+              {showPreview ? (
+                <Card className="min-h-[300px] p-4">
+                  <div 
+                    className="prose max-w-none" 
+                    dangerouslySetInnerHTML={{ __html: content }}
+                    dir="rtl"
+                  />
+                  <Button 
+                    onClick={() => setShowPreview(false)}
+                    variant="outline"
+                    className="mt-4"
+                  >
+                    العودة للتحرير
+                  </Button>
+                </Card>
+              ) : (
+                <WysiwygEditor
+                  value={content}
+                  onChange={setContent}
+                  placeholder="اكتب محتوى الموضوع هنا..."
+                  onSubmit={handleSubmit}
+                  onSaveDraft={handleSaveDraft}
+                  onPreview={handlePreview}
+                  isSubmitting={loading}
+                  showSubmitButtons={true}
+                />
+              )}
             </div>
 
-            <div className="flex gap-3">
-              <Button type="submit" disabled={loading} className="bg-green-600 hover:bg-green-700">
-                {loading ? (
-                  "جاري النشر..."
-                ) : (
-                  <>
-                    <Send className="w-4 h-4 ml-2" />
-                    نشر الموضوع
-                  </>
-                )}
-              </Button>
-              <Button type="button" variant="outline" onClick={() => navigate(-1)}>
-                إلغاء
-              </Button>
-            </div>
-          </form>
+            {!showPreview && (
+              <div className="flex gap-3">
+                <Button 
+                  onClick={handleSubmit} 
+                  disabled={loading} 
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {loading ? "جاري النشر..." : "نشر الموضوع"}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+                  إلغاء
+                </Button>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

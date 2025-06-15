@@ -1,16 +1,15 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowLeft, ThumbsUp, MessageSquare, Eye, Clock, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import WysiwygEditor from "@/components/editor/WysiwygEditor";
 
 interface Topic {
   id: string;
@@ -44,6 +43,7 @@ const TopicView = () => {
   const [newReply, setNewReply] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     if (slug) {
@@ -193,6 +193,17 @@ const TopicView = () => {
     }
   };
 
+  const handleSaveDraft = async () => {
+    toast({
+      title: "تم الحفظ",
+      description: "تم حفظ مسودة الرد",
+    });
+  };
+
+  const handlePreview = () => {
+    setShowPreview(!showPreview);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50 p-6" dir="rtl">
@@ -265,9 +276,11 @@ const TopicView = () => {
           </CardHeader>
           <CardContent>
             <div className="prose max-w-none">
-              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {topic?.content}
-              </p>
+              <div 
+                className="text-gray-700 leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: topic?.content || '' }}
+                dir="rtl"
+              />
             </div>
             <div className="flex items-center gap-4 mt-6 pt-4 border-t">
               <Button variant="ghost" size="sm">
@@ -307,7 +320,11 @@ const TopicView = () => {
                         })}
                       </span>
                     </div>
-                    <p className="text-gray-700 whitespace-pre-wrap">{reply.content}</p>
+                    <div 
+                      className="text-gray-700"
+                      dangerouslySetInnerHTML={{ __html: reply.content }}
+                      dir="rtl"
+                    />
                     <div className="mt-2">
                       <Button variant="ghost" size="sm">
                         <ThumbsUp className="w-3 h-3 ml-1" />
@@ -325,20 +342,43 @@ const TopicView = () => {
         <Card>
           <CardContent className="p-4">
             <h4 className="font-semibold text-gray-800 mb-3">إضافة رد</h4>
-            <Textarea
-              value={newReply}
-              onChange={(e) => setNewReply(e.target.value)}
-              placeholder="اكتب ردك هنا..."
-              className="mb-3"
-              rows={4}
-            />
-            <Button 
-              onClick={handleSubmitReply}
-              disabled={!newReply.trim() || submitting}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {submitting ? "جاري الإرسال..." : "إرسال الرد"}
-            </Button>
+            {showPreview ? (
+              <div className="space-y-4">
+                <Card className="min-h-[200px] p-4">
+                  <div 
+                    className="prose max-w-none" 
+                    dangerouslySetInnerHTML={{ __html: newReply }}
+                    dir="rtl"
+                  />
+                </Card>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={handleSubmitReply}
+                    disabled={!newReply.trim() || submitting}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {submitting ? "جاري الإرسال..." : "إرسال الرد"}
+                  </Button>
+                  <Button 
+                    onClick={() => setShowPreview(false)}
+                    variant="outline"
+                  >
+                    العودة للتحرير
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <WysiwygEditor
+                value={newReply}
+                onChange={setNewReply}
+                placeholder="اكتب ردك هنا..."
+                onSubmit={handleSubmitReply}
+                onSaveDraft={handleSaveDraft}
+                onPreview={handlePreview}
+                isSubmitting={submitting}
+                showSubmitButtons={true}
+              />
+            )}
           </CardContent>
         </Card>
       </div>

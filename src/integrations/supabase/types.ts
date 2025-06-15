@@ -122,6 +122,27 @@ export type Database = {
           },
         ]
       }
+      group_permissions: {
+        Row: {
+          enabled: boolean
+          group_role: Database["public"]["Enums"]["user_role"]
+          id: string
+          permission: Database["public"]["Enums"]["permission_key"]
+        }
+        Insert: {
+          enabled?: boolean
+          group_role: Database["public"]["Enums"]["user_role"]
+          id?: string
+          permission: Database["public"]["Enums"]["permission_key"]
+        }
+        Update: {
+          enabled?: boolean
+          group_role?: Database["public"]["Enums"]["user_role"]
+          id?: string
+          permission?: Database["public"]["Enums"]["permission_key"]
+        }
+        Relationships: []
+      }
       likes: {
         Row: {
           comment_id: string | null
@@ -501,6 +522,13 @@ export type Database = {
     }
     Enums: {
       comment_status: "approved" | "pending" | "rejected"
+      permission_key:
+        | "delete_topic"
+        | "update_topic"
+        | "move_topic"
+        | "hide_topic"
+        | "pin_topic"
+        | "feature_topic"
       topic_status: "published" | "pending" | "rejected" | "archived"
       user_role: "admin" | "moderator" | "member" | "pending"
     }
@@ -619,6 +647,14 @@ export const Constants = {
   public: {
     Enums: {
       comment_status: ["approved", "pending", "rejected"],
+      permission_key: [
+        "delete_topic",
+        "update_topic",
+        "move_topic",
+        "hide_topic",
+        "pin_topic",
+        "feature_topic",
+      ],
       topic_status: ["published", "pending", "rejected", "archived"],
       user_role: ["admin", "moderator", "member", "pending"],
     },

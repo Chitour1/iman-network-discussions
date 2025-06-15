@@ -1,3 +1,4 @@
+
 import ForumLayout from "@/components/forum/ForumLayout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -9,6 +10,21 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import React, { useState } from "react";
 import GroupEditDialog from "@/components/admin/GroupEditDialog";
+import { useGroupPermissions, useUpdateGroupPermission, PermissionKey, GroupRole } from "@/hooks/useGroupPermissions";
+
+const roles: { role: GroupRole; name: string }[] = [
+  { role: "admin", name: "الإدارة" },
+  { role: "moderator", name: "المشرفون" },
+  { role: "member", name: "الأعضاء" },
+];
+const ALL_PERMISSIONS: { key: PermissionKey; label: string }[] = [
+  { key: "delete_topic", label: "حذف موضوع" },
+  { key: "update_topic", label: "تعديل موضوع" },
+  { key: "move_topic", label: "نقل موضوع" },
+  { key: "hide_topic", label: "إخفاء موضوع" },
+  { key: "pin_topic", label: "تثبيت موضوع" },
+  { key: "feature_topic", label: "تمييز موضوع" },
+];
 
 const fetchUsers = async () => {
   const { data, error } = await supabase
@@ -26,40 +42,16 @@ const AdminPermissions = () => {
     queryFn: fetchUsers,
   });
 
+  const { data: permissions, isLoading: loadingPerms } = useGroupPermissions();
+  const updatePermission = useUpdateGroupPermission();
+
   // تجميع الأعضاء حسب الدور
-  const groups = [
-    {
-      id: "admins",
-      name: "الإدارة",
-      role: "admin",
-      members: users?.filter(u => u.role === "admin") || [],
-      permissions: [
-        "حذف مواضيع",
-        "تعيين مشرفين",
-        "تغيير إعدادات الموقع",
-      ],
-    },
-    {
-      id: "moderators",
-      name: "المشرفون",
-      role: "moderator",
-      members: users?.filter(u => u.role === "moderator") || [],
-      permissions: [
-        "حذف تعليقات",
-        "إغلاق مواضيع",
-      ],
-    },
-    {
-      id: "users",
-      name: "الأعضاء",
-      role: "member", // FIX here
-      members: users?.filter(u => u.role === "member") || [],
-      permissions: [
-        "كتابة مواضيع جديدة",
-        "الرد على المشاركات",
-      ],
-    },
-  ];
+  const groups = roles.map(roleObj => ({
+    id: roleObj.role,
+    name: roleObj.name,
+    role: roleObj.role,
+    members: users?.filter(u => u.role === roleObj.role) || [],
+  }));
 
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
 
@@ -81,59 +73,52 @@ const AdminPermissions = () => {
             <CardTitle>إدارة الصلاحيات والمجموعات</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>المجموعة</TableHead>
-                  <TableHead>الصلاحيات</TableHead>
-                  <TableHead>الأعضاء</TableHead>
-                  <TableHead>خيارات</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading && (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={4}>جاري التحميل...</TableCell>
+                    <TableHead>الصلاحية</TableHead>
+                    {roles.map(r => (
+                      <TableHead key={r.role}>{r.name}</TableHead>
+                    ))}
                   </TableRow>
-                )}
-                {error && (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-red-600">{String(error.message)}</TableCell>
-                  </TableRow>
-                )}
-                {groups.map((group) => (
-                  <TableRow key={group.id}>
-                    <TableCell>{group.name}</TableCell>
-                    <TableCell>
-                      <ul className="list-disc list-inside text-sm text-gray-700">
-                        {group.permissions.map((perm, i) => (
-                          <li key={i}>{perm}</li>
-                        ))}
-                      </ul>
-                    </TableCell>
-                    <TableCell>
-                      {group.members.length === 0
-                        ? <span className="text-gray-400">لا يوجد حاليا أعضاء</span>
-                        : group.members.map((m, idx) => (
-                          <span
-                            key={m.id}
-                            className="inline-block rounded bg-gray-200 px-2 py-0.5 ml-1 text-xs"
-                          >
-                            {m.username} ({m.display_name ?? "بدون اسم معرض"})
-                          </span>
-                        ))}
-                    </TableCell>
-                    <TableCell>
-                      <Button size="sm" variant="outline" className="ml-1"
-                        onClick={() => setEditingGroupId(group.id)}
-                      >تعديل</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {ALL_PERMISSIONS.map(perm => (
+                    <TableRow key={perm.key}>
+                      <TableCell className="font-bold">{perm.label}</TableCell>
+                      {roles.map(role => {
+                        const row = permissions?.find(p =>
+                          p.group_role === role.role && p.permission === perm.key
+                        );
+                        return (
+                          <TableCell key={role.role}>
+                            {loadingPerms || !row ? (
+                              <div className="text-gray-400">...</div>
+                            ) : (
+                              <input
+                                type="checkbox"
+                                checked={!!row.enabled}
+                                className="w-5 h-5 accent-green-600"
+                                onChange={e => {
+                                  updatePermission.mutate({
+                                    id: row.id,
+                                    enabled: e.target.checked,
+                                  });
+                                }}
+                                disabled={updatePermission.isPending}
+                              />
+                            )}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
             <p className="text-gray-500 mt-6 text-center text-sm">
-              قريبًا يمكنك إضافة وتعديل صلاحيات وعناصر المجموعات مباشرة من هنا.
+              يمكنك التحكم في الصلاحيات الفعليّة لكل مجموعة من هنا. أي تغيير يُطبّق مباشرةً.
             </p>
             <GroupEditDialog
               open={!!editingGroupId}

@@ -29,7 +29,7 @@ export default function CategoryTableRow({ category, onEdit, onDelete }: Props) 
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ description: "تم حذف القسم بنجاح", variant: "success" });
+      toast({ description: "تم حذف القسم بنجاح", variant: "default" });
       queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
       onDelete();
     },

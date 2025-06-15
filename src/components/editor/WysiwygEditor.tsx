@@ -42,7 +42,7 @@ import {
   Subscript,
   Superscript,
   Copyright,
-  Trademark,
+  Shield,
   ArrowRight,
   ArrowLeft,
   PlayCircle,
@@ -578,7 +578,7 @@ const WysiwygEditor = ({
                 onClick={() => insertSpecialChar('™')}
                 title="رمز العلامة التجارية"
               >
-                <Trademark className="w-4 h-4" />
+                <Shield className="w-4 h-4" />
               </Button>
               <Button
                 size="sm"
@@ -644,7 +644,7 @@ const WysiwygEditor = ({
                 onClick={handleRemoveFormatting}
                 title="محو التنسيق"
               >
-                <RemoveFormatting className="w-4 h-4" />
+                <Eraser className="w-4 h-4" />
               </Button>
             </div>
 

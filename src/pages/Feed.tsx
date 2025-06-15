@@ -99,10 +99,18 @@ function FeedTopicModal({
         >
           {/* الكاتب */}
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-9 h-9 rounded-full bg-pink-200 flex items-center justify-center text-pink-600 text-lg font-bold overflow-hidden">
+            <div
+              className="w-9 h-9 rounded-full bg-pink-200 flex items-center justify-center text-pink-600 text-lg font-bold overflow-hidden cursor-pointer"
+              onClick={() => author && author.username && window.open(`/u/${author.username}`, "_self")}
+              title={author?.display_name || author?.username || ""}
+            >
               {author?.display_name?.charAt(0) || author?.username?.charAt(0) || "م"}
             </div>
-            <span className="font-semibold text-pink-700">
+            <span
+              className="font-semibold text-pink-700 cursor-pointer"
+              onClick={() => author && author.username && window.open(`/u/${author.username}`, "_self")}
+              title={author?.display_name || author?.username || ""}
+            >
               {author?.display_name || author?.username || "مستخدم"}
             </span>
             <span className="text-xs text-gray-400 ml-2">{new Date(topic.created_at).toLocaleDateString()}</span>
@@ -401,10 +409,18 @@ export default function Feed() {
                   >
                     {/* الكاتب */}
                     <div className="flex items-center gap-3 mb-2">
-                      <div className="w-8 h-8 bg-pink-200 rounded-full flex items-center justify-center text-sm text-pink-700 overflow-hidden">
+                      <div
+                        className="w-8 h-8 bg-pink-200 rounded-full flex items-center justify-center text-sm text-pink-700 overflow-hidden cursor-pointer"
+                        onClick={() => author && author.username && window.open(`/u/${author.username}`, "_self")}
+                        title={author?.display_name || author?.username || ""}
+                      >
                         {author?.display_name?.charAt(0) || author?.username?.charAt(0) || "م"}
                       </div>
-                      <span className="font-semibold text-pink-700">
+                      <span
+                        className="font-semibold text-pink-700 cursor-pointer"
+                        onClick={() => author && author.username && window.open(`/u/${author.username}`, "_self")}
+                        title={author?.display_name || author?.username || ""}
+                      >
                         {author?.display_name || author?.username || "مستخدم"}
                       </span>
                       {/* زر المتابعة */}

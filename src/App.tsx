@@ -34,6 +34,7 @@ const App = () => (
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/settings" element={<AdminSettings />} />
+                <Route path="/u/:username" element={<(await import('./pages/user/[username].tsx')).default />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>

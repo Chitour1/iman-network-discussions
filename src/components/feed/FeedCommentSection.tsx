@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -134,12 +133,22 @@ export default function FeedCommentSection({ topicId, autoFocusInput = false }: 
           const author = profiles[comment.author_id];
           return (
             <div key={comment.id} className="flex items-start gap-2 bg-white rounded-lg border border-gray-100 p-2 shadow-sm">
-              <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 text-xs font-bold overflow-hidden">
+              <div
+                className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 text-xs font-bold overflow-hidden cursor-pointer"
+                onClick={() => author?.username && window.open(`/u/${author.username}`, "_self")}
+                title={author?.display_name || author?.username || ""}
+              >
                 {author?.display_name?.charAt(0) || author?.username?.charAt(0) || "م"}
               </div>
               <div className="flex-1">
                 <div className="flex gap-2 items-center">
-                  <span className="text-pink-700 font-semibold text-xs">{author?.display_name || author?.username || "مستخدم"}</span>
+                  <span
+                    className="text-pink-700 font-semibold text-xs cursor-pointer"
+                    onClick={() => author?.username && window.open(`/u/${author.username}`, "_self")}
+                    title={author?.display_name || author?.username || ""}
+                  >
+                    {author?.display_name || author?.username || "مستخدم"}
+                  </span>
                   <span className="text-xs text-gray-400">{new Date(comment.created_at).toLocaleDateString()}</span>
                 </div>
                 <div className="mt-1 text-sm text-gray-700 break-words whitespace-pre-wrap">

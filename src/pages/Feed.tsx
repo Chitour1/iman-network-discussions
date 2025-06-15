@@ -108,6 +108,10 @@ function FeedTopicModal({
         >
           {renderPlainTextWithShortLinks(topic.content)}
         </div>
+        {/* قسم التعليقات داخل المودال */}
+        <div className="mb-2">
+          <FeedCommentSection topicId={topic.id} autoFocusInput />
+        </div>
         <div className="flex gap-2 items-center mt-auto">
           <Button variant="secondary" onClick={goToFullView}>
             عرض كامل في المنتدى

@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { MessageCircle } from "lucide-react";
+import { stripHtml } from "@/utils/textUtils";
 
 type Comment = {
   id: string;
@@ -22,9 +24,10 @@ type Profile = {
 
 interface FeedCommentSectionProps {
   topicId: string;
+  autoFocusInput?: boolean; // اختياري: للتركيز على الحقل لو رغبت
 }
 
-export default function FeedCommentSection({ topicId }: FeedCommentSectionProps) {
+export default function FeedCommentSection({ topicId, autoFocusInput = false }: FeedCommentSectionProps) {
   const { user } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
@@ -87,7 +90,6 @@ export default function FeedCommentSection({ topicId }: FeedCommentSectionProps)
       setContent("");
       toast({ title: "تم إضافة تعليقك" });
       if (!profiles[user.id]) {
-        // Fallback: just fill in the id, others as null
         const userProfile: Profile = {
           id: user.id,
           display_name: null,
@@ -119,7 +121,7 @@ export default function FeedCommentSection({ topicId }: FeedCommentSectionProps)
                   <span className="text-pink-700 font-semibold text-xs">{author?.display_name || author?.username || "مستخدم"}</span>
                   <span className="text-xs text-gray-400">{new Date(comment.created_at).toLocaleDateString()}</span>
                 </div>
-                <div className="mt-1 text-sm text-gray-700 whitespace-pre-line">{comment.content}</div>
+                <div className="mt-1 text-sm text-gray-700 whitespace-pre-line">{stripHtml(comment.content)}</div>
               </div>
             </div>
           );
@@ -128,6 +130,7 @@ export default function FeedCommentSection({ topicId }: FeedCommentSectionProps)
       {user ? (
         <form className="flex gap-2" onSubmit={handleAddComment}>
           <input
+            autoFocus={autoFocusInput}
             className="flex-1 border rounded px-3 py-2 bg-white text-sm"
             placeholder="اكتب تعليقك هنا..."
             disabled={loading}

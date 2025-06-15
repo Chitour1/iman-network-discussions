@@ -7,7 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import React from "react";
+import React, { useState } from "react";
+import GroupEditDialog from "@/components/admin/GroupEditDialog";
 
 const fetchUsers = async () => {
   const { data, error } = await supabase
@@ -59,6 +60,10 @@ const AdminPermissions = () => {
       ],
     },
   ];
+
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+
+  const editingGroup = groups.find((g) => g.id === editingGroupId) || null;
 
   return (
     <ForumLayout session={session}>
@@ -119,7 +124,9 @@ const AdminPermissions = () => {
                         ))}
                     </TableCell>
                     <TableCell>
-                      <Button size="sm" variant="outline" className="ml-1">تعديل</Button>
+                      <Button size="sm" variant="outline" className="ml-1"
+                        onClick={() => setEditingGroupId(group.id)}
+                      >تعديل</Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -128,6 +135,11 @@ const AdminPermissions = () => {
             <p className="text-gray-500 mt-6 text-center text-sm">
               قريبًا يمكنك إضافة وتعديل صلاحيات وعناصر المجموعات مباشرة من هنا.
             </p>
+            <GroupEditDialog
+              open={!!editingGroupId}
+              onOpenChange={open => setEditingGroupId(open ? editingGroupId : null)}
+              group={editingGroup}
+            />
           </CardContent>
         </Card>
       </div>

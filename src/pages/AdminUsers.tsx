@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import React, { useState } from "react";
 import AdminUserMenu from "@/components/admin/AdminUserMenu";
+import AdminUserEditDialog from "@/components/admin/AdminUserEditDialog";
 
 const fetchUsers = async () => {
   const { data, error } = await supabase
@@ -27,6 +28,8 @@ const AdminUsers = () => {
   });
 
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  const editingUser = users?.find((user) => user.id === editingId) || null;
 
   return (
     <ForumLayout session={session}>
@@ -113,7 +116,12 @@ const AdminUsers = () => {
             <p className="text-gray-500 mt-6 text-center text-sm">
               يمكنك البحث والتعديل وتغيير الرتب أو حظر المستخدمين من هنا.
             </p>
-            {/* يمكن إضافة Dialog أو Modal عند editingId لفتح نافذة تحديث */}
+            {/* Dialog for editing user */}
+            <AdminUserEditDialog
+              open={!!editingId}
+              onOpenChange={open => setEditingId(open ? editingId : null)}
+              user={editingUser}
+            />
           </CardContent>
         </Card>
       </div>

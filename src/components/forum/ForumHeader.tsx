@@ -29,7 +29,7 @@ const ForumHeader = ({ session }: ForumHeaderProps) => {
                       session?.user?.email?.slice(0, 2).toUpperCase() || "عض";
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+    <header className="fixed inset-x-0 top-0 z-50 bg-white shadow-sm border-b border-gray-200 px-6 py-4 w-full">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <SidebarTrigger />
@@ -111,3 +111,4 @@ const ForumHeader = ({ session }: ForumHeaderProps) => {
 };
 
 export default ForumHeader;
+

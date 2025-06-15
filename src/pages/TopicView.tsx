@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +12,14 @@ import { useToast } from "@/hooks/use-toast";
 import WysiwygEditor from "@/components/editor/WysiwygEditor";
 import ForumLayout from "@/components/forum/ForumLayout";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 interface Topic {
   id: string;
@@ -295,12 +302,55 @@ const TopicView = () => {
   return (
     <ForumLayout session={session}>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between gap-4 mb-6">
+        {/* Breadcrumbs */}
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/" className="font-semibold text-base">
+                شبكة الساحات للحوار الإسلامي الحر
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                href={
+                  topic?.category_name && topic?.category_id
+                    ? `/category/${encodeURIComponent(topic.category_name)}`
+                    : "#"
+                }
+                className="font-semibold text-base"
+              >
+                {topic?.category_name || ""}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage className="font-semibold text-base">
+                {topic?.title || ""}
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
+        {/* حذف زر العودة القديم */}
+        {/* <div className="flex items-center justify-between gap-4 mb-6">
           <Button variant="ghost" onClick={() => navigate('/')}>
             <ArrowLeft className="w-4 h-4 ml-2" />
             العودة
           </Button>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">حجم الخط:</span>
+            <Button variant="outline" size="icon" className="w-8 h-8" onClick={() => handleFontSizeChange(contentFontSize + 1)}>
+              <Plus className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" size="icon" className="w-8 h-8" onClick={() => handleFontSizeChange(contentFontSize - 1)}>
+              <Minus className="w-4 h-4" />
+            </Button>
+          </div>
+        </div> */}
+
+        {/* إضافة زر التحكم بحجم الخط فقط جهة اليمين */}
+        <div className="flex items-center justify-end gap-4 mb-6">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600">حجم الخط:</span>
             <Button variant="outline" size="icon" className="w-8 h-8" onClick={() => handleFontSizeChange(contentFontSize + 1)}>

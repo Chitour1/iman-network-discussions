@@ -36,8 +36,8 @@ const ForumHeader = ({ session }: ForumHeaderProps) => {
               <Building className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-800">شبكة أنا المؤمن</h1>
-              <p className="text-sm text-gray-600">للنقاش الإسلامي</p>
+              <h1 className="text-xl font-bold text-gray-800">شبكة الساحات</h1>
+              <p className="text-sm text-gray-600">للنقاش الإسلامي الحر</p>
             </div>
           </div>
         </div>

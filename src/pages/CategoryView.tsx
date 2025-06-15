@@ -1,22 +1,22 @@
+
 import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  MessageSquare, 
-  Eye, 
-  ThumbsUp, 
-  Plus, 
-  Pin,
-  Clock,
-  User
-} from "lucide-react";
+import { ArrowLeft, Plus, MessageSquare, Eye, ThumbsUp, Clock, User, Pin } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
-import { useNavigate } from "react-router-dom";
 
-// Updated interface to match Supabase response
+interface Category {
+  id: string;
+  name: string;
+  description: string;
+  color: string;
+  topic_count: number;
+}
+
 interface Topic {
   id: string;
   title: string;
@@ -26,92 +26,67 @@ interface Topic {
   like_count: number;
   is_pinned: boolean;
   created_at: string;
-  author_id: string;
-  category_id: string;
   slug: string;
   profiles: {
     display_name: string;
     username: string;
   } | null;
-  categories: {
-    name: string;
-    color: string;
-  } | null;
 }
 
-const ForumMain = () => {
+const CategoryView = () => {
+  const { slug } = useParams();
+  const navigate = useNavigate();
+  const [category, setCategory] = useState<Category | null>(null);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchTopics();
-  }, []);
+    if (slug) {
+      fetchCategory();
+      fetchTopics();
+    }
+  }, [slug]);
+
+  const fetchCategory = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('slug', slug)
+        .eq('is_active', true)
+        .single();
+
+      if (error) throw error;
+      setCategory(data);
+    } catch (error) {
+      console.error('Error fetching category:', error);
+      navigate('/');
+    }
+  };
 
   const fetchTopics = async () => {
     try {
-      const { data, error } = await supabase
-        .from('topics')
-        .select(`
-          *,
-          profiles (display_name, username),
-          categories (name, color)
-        `)
-        .eq('status', 'published')
-        .order('is_pinned', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(20);
+      const { data: categoryData } = await supabase
+        .from('categories')
+        .select('id')
+        .eq('slug', slug)
+        .single();
 
-      if (error) throw error;
-      
-      // Transform data to ensure proper typing
-      const transformedData: Topic[] = (data || []).map(item => {
-        // Safe profile extraction with explicit null check
-        let profiles: { display_name: string; username: string; } | null = null;
-        if (item.profiles && 
-            typeof item.profiles === 'object' && 
-            item.profiles !== null) {
-          const profileObj = item.profiles as any;
-          if ('display_name' in profileObj && 'username' in profileObj) {
-            profiles = {
-              display_name: profileObj.display_name as string,
-              username: profileObj.username as string
-            };
-          }
-        }
+      if (categoryData) {
+        const { data, error } = await supabase
+          .from('topics')
+          .select(`
+            *,
+            profiles (display_name, username)
+          `)
+          .eq('category_id', categoryData.id)
+          .eq('status', 'published')
+          .order('is_pinned', { ascending: false })
+          .order('created_at', { ascending: false });
 
-        // Safe category extraction with explicit null check
-        let categories: { name: string; color: string; } | null = null;
-        if (item.categories && 
-            typeof item.categories === 'object' && 
-            item.categories !== null) {
-          const categoryObj = item.categories as any;
-          if ('name' in categoryObj && 'color' in categoryObj) {
-            categories = {
-              name: categoryObj.name as string,
-              color: categoryObj.color as string
-            };
-          }
-        }
-
-        return {
-          id: item.id,
-          title: item.title,
-          content: item.content,
-          view_count: item.view_count || 0,
-          reply_count: item.reply_count || 0,
-          like_count: item.like_count || 0,
-          is_pinned: item.is_pinned || false,
-          created_at: item.created_at,
-          author_id: item.author_id,
-          category_id: item.category_id,
-          slug: item.slug,
-          profiles,
-          categories
-        };
-      });
-      
-      setTopics(transformedData);
+        if (error) throw error;
+        setTopics(data || []);
+      }
     } catch (error) {
       console.error('Error fetching topics:', error);
     } finally {
@@ -120,38 +95,49 @@ const ForumMain = () => {
   };
 
   const handleCreateTopic = () => {
-    navigate('/create-topic');
+    navigate(`/create-topic?category=${category?.name}`);
   };
 
-  const handleTopicClick = (slug: string) => {
-    navigate(`/topic/${slug}`);
+  const handleTopicClick = (topicSlug: string) => {
+    navigate(`/topic/${topicSlug}`);
   };
 
   if (loading) {
     return (
-      <main className="flex-1 p-6">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50 p-6" dir="rtl">
         <div className="max-w-4xl mx-auto">
           <div className="animate-pulse space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg p-6 shadow-sm">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </div>
-            ))}
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <div className="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            </div>
           </div>
         </div>
-      </main>
+      </div>
+    );
+  }
+
+  if (!category) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50 p-6" dir="rtl">
+        <div className="max-w-4xl mx-auto text-center py-12">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">القسم غير موجود</h2>
+          <Button onClick={() => navigate('/')}>العودة للرئيسية</Button>
+        </div>
+      </div>
     );
   }
 
   return (
-    <main className="flex-1 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50 p-6" dir="rtl">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">أحدث المواضيع</h1>
-            <p className="text-gray-600">تابع آخر النقاشات والمواضيع في المنتدى</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" onClick={() => navigate('/')}>
+              <ArrowLeft className="w-4 h-4 ml-2" />
+              العودة
+            </Button>
           </div>
           <Button onClick={handleCreateTopic} className="bg-green-600 hover:bg-green-700">
             <Plus className="w-4 h-4 ml-2" />
@@ -159,17 +145,21 @@ const ForumMain = () => {
           </Button>
         </div>
 
-        {/* Welcome Message */}
-        <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+        {/* Category Info */}
+        <Card className="border-2" style={{ borderColor: category.color }}>
           <CardHeader>
-            <CardTitle className="text-green-800">أهلاً وسهلاً بك في شبكة الساحات</CardTitle>
+            <CardTitle className="flex items-center gap-3">
+              <div 
+                className="w-4 h-4 rounded-full"
+                style={{ backgroundColor: category.color }}
+              ></div>
+              {category.name}
+            </CardTitle>
+            <p className="text-gray-600">{category.description}</p>
+            <div className="text-sm text-gray-500">
+              {category.topic_count} موضوع
+            </div>
           </CardHeader>
-          <CardContent>
-            <p className="text-green-700">
-              نرحب بك في شبكة الساحات للنقاش الإسلامي الحر. هنا يمكنك المشاركة في النقاشات العلمية الهادفة، 
-              وتبادل المعرفة والخبرات مع إخوانك المؤمنين من جميع أنحاء العالم في بيئة حرة ومحترمة.
-            </p>
-          </CardContent>
         </Card>
 
         {/* Topics List */}
@@ -178,8 +168,8 @@ const ForumMain = () => {
             <Card className="text-center py-12">
               <CardContent>
                 <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-600 mb-2">لا توجد مواضيع حالياً</h3>
-                <p className="text-gray-500 mb-4">كن أول من يبدأ النقاش في المنتدى</p>
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">لا توجد مواضيع في هذا القسم</h3>
+                <p className="text-gray-500 mb-4">كن أول من يبدأ النقاش في هذا القسم</p>
                 <Button onClick={handleCreateTopic} className="bg-green-600 hover:bg-green-700">
                   <Plus className="w-4 h-4 ml-2" />
                   أضف موضوع جديد
@@ -196,15 +186,12 @@ const ForumMain = () => {
                         {topic.is_pinned && (
                           <Pin className="w-4 h-4 text-green-600" />
                         )}
-                        {topic.categories && (
-                          <Badge 
-                            variant="secondary" 
-                            className="text-xs"
-                            style={{ backgroundColor: `${topic.categories.color}20`, color: topic.categories.color }}
-                          >
-                            {topic.categories.name}
-                          </Badge>
-                        )}
+                        <Badge 
+                          variant="secondary"
+                          style={{ backgroundColor: `${category.color}20`, color: category.color }}
+                        >
+                          مثبت
+                        </Badge>
                       </div>
                       
                       <h3 
@@ -259,8 +246,8 @@ const ForumMain = () => {
           )}
         </div>
       </div>
-    </main>
+    </div>
   );
 };
 
-export default ForumMain;
+export default CategoryView;

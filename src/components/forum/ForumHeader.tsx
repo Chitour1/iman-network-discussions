@@ -2,7 +2,6 @@
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -32,7 +31,6 @@ const ForumHeader = ({ session }: ForumHeaderProps) => {
     <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <SidebarTrigger />
           
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-blue-600 rounded-full flex items-center justify-center">

@@ -4,16 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  MessageSquare, 
-  Eye, 
-  ThumbsUp, 
-  Plus, 
-  Pin,
-  Clock,
-  User,
-  Users
-} from "lucide-react";
+import { MessageSquare, Eye, ThumbsUp, Plus, Pin, Clock, User, Users } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
@@ -44,46 +35,52 @@ interface Topic {
     color: string;
   } | null;
 }
-
 interface ForumStats {
   totalTopics: number;
   totalUsers: number;
   onlineUsers: number;
 }
-
 const ForumMain = () => {
   const [topics, setTopics] = useState<Topic[]>([]);
-  const [stats, setStats] = useState<ForumStats>({ totalTopics: 0, totalUsers: 0, onlineUsers: 0 });
+  const [stats, setStats] = useState<ForumStats>({
+    totalTopics: 0,
+    totalUsers: 0,
+    onlineUsers: 0
+  });
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
   const navigate = useNavigate();
-
   useEffect(() => {
     fetchTopics();
     fetchStats();
     fetchCategories();
   }, []);
-
   const fetchStats = async () => {
     try {
       // Get total topics count
-      const { count: topicsCount } = await supabase
-        .from('topics')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'published');
+      const {
+        count: topicsCount
+      } = await supabase.from('topics').select('*', {
+        count: 'exact',
+        head: true
+      }).eq('status', 'published');
 
       // Get total users count
-      const { count: usersCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
+      const {
+        count: usersCount
+      } = await supabase.from('profiles').select('*', {
+        count: 'exact',
+        head: true
+      });
 
       // Get online users (users active in last 10 minutes)
       const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-      const { count: onlineCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .gte('last_seen_at', tenMinutesAgo);
-
+      const {
+        count: onlineCount
+      } = await supabase.from('profiles').select('*', {
+        count: 'exact',
+        head: true
+      }).gte('last_seen_at', tenMinutesAgo);
       setStats({
         totalTopics: topicsCount || 0,
         totalUsers: usersCount || 0,
@@ -93,30 +90,32 @@ const ForumMain = () => {
       console.error('Error fetching stats:', error);
     }
   };
-
   const fetchTopics = async () => {
     try {
-      const { data, error } = await supabase
-        .from('topics')
-        .select(`
+      const {
+        data,
+        error
+      } = await supabase.from('topics').select(`
           *,
           profiles (display_name, username, avatar_url, bio),
           categories (name, color)
-        `)
-        .eq('status', 'published')
-        .order('is_pinned', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(20);
-
+        `).eq('status', 'published').order('is_pinned', {
+        ascending: false
+      }).order('created_at', {
+        ascending: false
+      }).limit(20);
       if (error) throw error;
-      
+
       // Transform data to ensure proper typing
       const transformedData: Topic[] = (data || []).map(item => {
         // Safe profile extraction with explicit null check
-        let profiles: { display_name: string; username: string; avatar_url: string | null; bio: string | null; } | null = null;
-        if (item.profiles && 
-            typeof item.profiles === 'object' && 
-            item.profiles !== null) {
+        let profiles: {
+          display_name: string;
+          username: string;
+          avatar_url: string | null;
+          bio: string | null;
+        } | null = null;
+        if (item.profiles && typeof item.profiles === 'object' && item.profiles !== null) {
           const profileObj = item.profiles as any;
           if ('display_name' in profileObj && 'username' in profileObj) {
             profiles = {
@@ -129,10 +128,11 @@ const ForumMain = () => {
         }
 
         // Safe category extraction with explicit null check
-        let categories: { name: string; color: string; } | null = null;
-        if (item.categories && 
-            typeof item.categories === 'object' && 
-            item.categories !== null) {
+        let categories: {
+          name: string;
+          color: string;
+        } | null = null;
+        if (item.categories && typeof item.categories === 'object' && item.categories !== null) {
           const categoryObj = item.categories as any;
           if ('name' in categoryObj && 'color' in categoryObj) {
             categories = {
@@ -141,7 +141,6 @@ const ForumMain = () => {
             };
           }
         }
-
         return {
           id: item.id,
           title: item.title,
@@ -158,7 +157,6 @@ const ForumMain = () => {
           categories
         };
       });
-      
       setTopics(transformedData);
     } catch (error) {
       console.error('Error fetching topics:', error);
@@ -166,49 +164,37 @@ const ForumMain = () => {
       setLoading(false);
     }
   };
-
   const fetchCategories = async () => {
     try {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order');
-
+      const {
+        data,
+        error
+      } = await supabase.from('categories').select('*').eq('is_active', true).order('sort_order');
       if (error) throw error;
       setCategories(data || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
   };
-
   const handleCreateTopic = () => {
     navigate('/create-topic');
   };
-
   const handleTopicClick = (slug: string) => {
     navigate(`/topic/${slug}`);
   };
-
   if (loading) {
-    return (
-      <main className="flex-1 p-6">
+    return <main className="flex-1 p-6">
         <div className="max-w-4xl mx-auto">
           <div className="animate-pulse space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg p-6 shadow-sm">
+            {[...Array(5)].map((_, i) => <div key={i} className="bg-white rounded-lg p-6 shadow-sm">
                 <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
                 <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </div>
-            ))}
+              </div>)}
           </div>
         </div>
-      </main>
-    );
+      </main>;
   }
-
-  return (
-    <main className="flex-1 p-6">
+  return <main className="flex-1 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
 
         {/* Stats Cards */}
@@ -254,22 +240,16 @@ const ForumMain = () => {
             <CardTitle className="text-green-800">أهلاً وسهلاً بك في شبكة الساحات</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-green-700">
-              نرحب بك في شبكة الساحات للنقاش الإسلامي الحر. هنا يمكنك المشاركة في النقاشات العلمية الهادفة، 
-              وتبادل المعرفة والخبرات مع إخوانك المؤمنين من جميع أنحاء العالم في بيئة حرة ومحترمة.
-            </p>
+            <p className="text-green-700">نرحب بك في شبكة الساحات للنقاش الإسلامي الحر. هنا يمكنك المشاركة في النقاشات العلمية الهادفة، وتبادل المعرفة والخبرات في بيئة إسلامية حرة ومحترمة.</p>
           </CardContent>
         </Card>
 
         {/* Forum Categories Grid */}
-        {categories.length > 0 && (
-          <ForumCategoriesGrid categories={categories} />
-        )}
+        {categories.length > 0 && <ForumCategoriesGrid categories={categories} />}
 
         {/* Topics List */}
         <div className="space-y-4">
-          {topics.length === 0 ? (
-            <Card className="text-center py-12">
+          {topics.length === 0 ? <Card className="text-center py-12">
               <CardContent>
                 <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-600 mb-2">لا توجد مواضيع حالياً</h3>
@@ -279,32 +259,21 @@ const ForumMain = () => {
                   أضف موضوع جديد
                 </Button>
               </CardContent>
-            </Card>
-          ) : (
-            topics.map((topic) => (
-              <Card key={topic.id} className="hover:shadow-md transition-shadow">
+            </Card> : topics.map(topic => <Card key={topic.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        {topic.is_pinned && (
-                          <Pin className="w-4 h-4 text-green-600" />
-                        )}
-                        {topic.categories && (
-                          <Badge 
-                            variant="secondary" 
-                            className="text-xs"
-                            style={{ backgroundColor: `${topic.categories.color}20`, color: topic.categories.color }}
-                          >
+                        {topic.is_pinned && <Pin className="w-4 h-4 text-green-600" />}
+                        {topic.categories && <Badge variant="secondary" className="text-xs" style={{
+                    backgroundColor: `${topic.categories.color}20`,
+                    color: topic.categories.color
+                  }}>
                             {topic.categories.name}
-                          </Badge>
-                        )}
+                          </Badge>}
                       </div>
                       
-                      <h3 
-                        className="text-lg font-semibold text-gray-800 mb-2 hover:text-green-600 cursor-pointer"
-                        onClick={() => handleTopicClick(topic.slug)}
-                      >
+                      <h3 className="text-lg font-semibold text-gray-800 mb-2 hover:text-green-600 cursor-pointer" onClick={() => handleTopicClick(topic.slug)}>
                         {topic.title}
                       </h3>
                       
@@ -327,9 +296,9 @@ const ForumMain = () => {
                           <Clock className="w-4 h-4" />
                           <span>
                             {formatDistanceToNow(new Date(topic.created_at), {
-                              addSuffix: true,
-                              locale: ar
-                            })}
+                        addSuffix: true,
+                        locale: ar
+                      })}
                           </span>
                         </div>
                       </div>
@@ -353,13 +322,9 @@ const ForumMain = () => {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
-            ))
-          )}
+              </Card>)}
         </div>
       </div>
-    </main>
-  );
+    </main>;
 };
-
 export default ForumMain;

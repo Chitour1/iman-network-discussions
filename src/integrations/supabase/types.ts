@@ -423,6 +423,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_categories_with_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          name: string
+          slug: string
+          description: string
+          color: string
+          icon: string
+          topic_count: number
+          comment_count: number
+          view_count: number
+          recent_topics_count: number
+        }[]
+      }
       get_user_role: {
         Args: { user_id: string }
         Returns: Database["public"]["Enums"]["user_role"]

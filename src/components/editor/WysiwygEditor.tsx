@@ -1,4 +1,3 @@
-
 import { useState, useRef, useMemo } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -85,7 +84,7 @@ const WysiwygEditor = ({
   const [showVideoDialog, setShowVideoDialog] = useState(false);
   const [showTableDialog, setShowTableDialog] = useState(false);
 
-  // ReactQuill modules with proper RTL and Arabic support
+  // ReactQuill modules with proper RTL and Arabic support + video embedding
   const modules = useMemo(() => ({
     toolbar: false, // We'll use custom toolbar
     clipboard: {
@@ -138,7 +137,10 @@ const WysiwygEditor = ({
     if (quill) {
       const range = quill.getSelection();
       if (range) {
+        // Insert image with proper attributes
         quill.insertEmbed(range.index, 'image', url);
+        // Move cursor after the image
+        quill.setSelection(range.index + 1);
       }
     }
   };
@@ -162,7 +164,11 @@ const WysiwygEditor = ({
     if (quill) {
       const range = quill.getSelection();
       if (range) {
-        quill.insertEmbed(range.index, 'video', embedUrl);
+        // Insert video as iframe HTML for better display
+        const videoHtml = `<iframe src="${embedUrl}" width="560" height="315" frameborder="0" allowfullscreen style="max-width: 100%; height: 315px;"></iframe>`;
+        const delta = quill.clipboard.convert({ html: videoHtml });
+        quill.updateContents(delta, 'user');
+        quill.setSelection(range.index + 1);
       }
     }
   };
@@ -695,7 +701,7 @@ const WysiwygEditor = ({
             placeholder={placeholder}
             modules={modules}
             formats={formats}
-            className="h-[400px] rtl-editor [&_.ql-editor]:text-right [&_.ql-editor]:dir-rtl [&_.ql-editor]:font-arabic"
+            className="h-[400px] rtl-editor [&_.ql-editor]:text-right [&_.ql-editor]:dir-rtl [&_.ql-editor]:font-arabic [&_.ql-editor_img]:max-w-full [&_.ql-editor_iframe]:max-w-full"
             style={{ 
               direction: 'rtl',
               fontFamily: 'Arial, sans-serif',

@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   MessageSquare, 
   Eye, 
@@ -10,11 +12,13 @@ import {
   Plus, 
   Pin,
   Clock,
-  User
+  User,
+  Users
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
+import { getContentPreview } from "@/utils/textUtils";
 
 // Updated interface to match Supabase response
 interface Topic {
@@ -32,6 +36,8 @@ interface Topic {
   profiles: {
     display_name: string;
     username: string;
+    avatar_url: string | null;
+    bio: string | null;
   } | null;
   categories: {
     name: string;
@@ -39,14 +45,52 @@ interface Topic {
   } | null;
 }
 
+interface ForumStats {
+  totalTopics: number;
+  totalUsers: number;
+  onlineUsers: number;
+}
+
 const ForumMain = () => {
   const [topics, setTopics] = useState<Topic[]>([]);
+  const [stats, setStats] = useState<ForumStats>({ totalTopics: 0, totalUsers: 0, onlineUsers: 0 });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchTopics();
+    fetchStats();
   }, []);
+
+  const fetchStats = async () => {
+    try {
+      // Get total topics count
+      const { count: topicsCount } = await supabase
+        .from('topics')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'published');
+
+      // Get total users count
+      const { count: usersCount } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      // Get online users (users active in last 10 minutes)
+      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+      const { count: onlineCount } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .gte('last_seen_at', tenMinutesAgo);
+
+      setStats({
+        totalTopics: topicsCount || 0,
+        totalUsers: usersCount || 0,
+        onlineUsers: onlineCount || 0
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
 
   const fetchTopics = async () => {
     try {
@@ -54,7 +98,7 @@ const ForumMain = () => {
         .from('topics')
         .select(`
           *,
-          profiles (display_name, username),
+          profiles (display_name, username, avatar_url, bio),
           categories (name, color)
         `)
         .eq('status', 'published')
@@ -67,7 +111,7 @@ const ForumMain = () => {
       // Transform data to ensure proper typing
       const transformedData: Topic[] = (data || []).map(item => {
         // Safe profile extraction with explicit null check
-        let profiles: { display_name: string; username: string; } | null = null;
+        let profiles: { display_name: string; username: string; avatar_url: string | null; bio: string | null; } | null = null;
         if (item.profiles && 
             typeof item.profiles === 'object' && 
             item.profiles !== null) {
@@ -75,7 +119,9 @@ const ForumMain = () => {
           if ('display_name' in profileObj && 'username' in profileObj) {
             profiles = {
               display_name: profileObj.display_name as string,
-              username: profileObj.username as string
+              username: profileObj.username as string,
+              avatar_url: profileObj.avatar_url as string | null,
+              bio: profileObj.bio as string | null
             };
           }
         }
@@ -147,6 +193,31 @@ const ForumMain = () => {
   return (
     <main className="flex-1 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-green-600">{stats.totalTopics}</div>
+              <div className="text-sm text-gray-600">إجمالي المواضيع</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-blue-600">{stats.totalUsers}</div>
+              <div className="text-sm text-gray-600">إجمالي الأعضاء</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <div className="flex items-center justify-center gap-2">
+                <div className="text-2xl font-bold text-orange-600">{stats.onlineUsers}</div>
+                <Users className="w-5 h-5 text-orange-600" />
+              </div>
+              <div className="text-sm text-gray-600">المتصفحين الآن</div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
@@ -215,12 +286,17 @@ const ForumMain = () => {
                       </h3>
                       
                       <p className="text-gray-600 mb-3 line-clamp-2">
-                        {topic.content.substring(0, 150)}...
+                        {getContentPreview(topic.content, 150)}
                       </p>
                       
                       <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <div className="flex items-center gap-1">
-                          <User className="w-4 h-4" />
+                        <div className="flex items-center gap-2">
+                          <Avatar className="w-6 h-6">
+                            <AvatarImage src={topic.profiles?.avatar_url || undefined} />
+                            <AvatarFallback className="bg-green-100 text-green-700 text-xs">
+                              {topic.profiles?.display_name?.slice(0, 2) || "؟؟"}
+                            </AvatarFallback>
+                          </Avatar>
                           <span>{topic.profiles?.display_name || "مستخدم مجهول"}</span>
                         </div>
                         

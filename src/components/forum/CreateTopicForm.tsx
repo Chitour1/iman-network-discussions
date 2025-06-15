@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { ArrowRight } from "lucide-react";
 import WysiwygEditor from "@/components/editor/WysiwygEditor";
+import { getContentPreview } from "@/utils/textUtils";
 
 interface Category {
   id: string;
@@ -29,13 +30,36 @@ const CreateTopicForm = ({ categories, selectedCategoryId }: CreateTopicFormProp
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const generateSlug = (title: string) => {
-    return title
+  const generateSlug = async (title: string, categoryId: string) => {
+    // Create a base slug from title
+    let baseSlug = title
       .toLowerCase()
       .replace(/[\u0600-\u06FF]/g, (match) => match) // Keep Arabic characters
       .replace(/[^a-z0-9\u0600-\u06FF\s-]/g, '') // Remove special characters except Arabic
       .replace(/\s+/g, '-') // Replace spaces with hyphens
       .trim();
+
+    // Check if slug exists in the same category
+    let finalSlug = baseSlug;
+    let counter = 1;
+    
+    while (true) {
+      const { data: existingTopic } = await supabase
+        .from('topics')
+        .select('id')
+        .eq('slug', finalSlug)
+        .eq('category_id', categoryId)
+        .single();
+
+      if (!existingTopic) {
+        break; // Slug is unique in this category
+      }
+      
+      finalSlug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
+    return finalSlug;
   };
 
   const handleSubmit = async () => {
@@ -62,7 +86,7 @@ const CreateTopicForm = ({ categories, selectedCategoryId }: CreateTopicFormProp
         return;
       }
 
-      const slug = generateSlug(title);
+      const slug = await generateSlug(title, categoryId);
       
       const { data, error } = await supabase
         .from('topics')
@@ -72,7 +96,8 @@ const CreateTopicForm = ({ categories, selectedCategoryId }: CreateTopicFormProp
           slug,
           author_id: user.id,
           category_id: categoryId,
-          status: 'published'
+          status: 'published',
+          is_pinned: false // المواضيع لا تكون مثبتة افتراضياً
         })
         .select()
         .single();
@@ -163,6 +188,14 @@ const CreateTopicForm = ({ categories, selectedCategoryId }: CreateTopicFormProp
               </label>
               {showPreview ? (
                 <Card className="min-h-[300px] p-4">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold mb-2">المعاينة:</h3>
+                    <div className="border-b pb-2 mb-4">
+                      <p className="text-sm text-gray-600">
+                        الملخص: {getContentPreview(content)}
+                      </p>
+                    </div>
+                  </div>
                   <div 
                     className="prose max-w-none" 
                     dangerouslySetInnerHTML={{ __html: content }}

@@ -81,14 +81,14 @@ const ForumSidebar = () => {
 
   const fetchCategoriesWithCounts = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_categories_with_stats');
+      const { data, error } = await supabase.rpc('get_categories_with_stats' as any);
 
       if (error) {
         console.error('Error fetching categories with stats via RPC:', error);
         throw error;
       }
 
-      const categoriesData = (data || []).map((cat: any) => ({
+      const categoriesData = ((data as any[]) || []).map((cat: any) => ({
         ...cat,
         topic_count: Number(cat.topic_count || 0),
         comment_count: Number(cat.comment_count || 0),

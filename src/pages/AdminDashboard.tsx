@@ -4,16 +4,21 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { useEffect } from "react";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 const AdminDashboard = () => {
   const { session, user, loading } = useAuth();
+  const userId = user?.id;
+  const { data: profile, isLoading: profileLoading } = useUserProfile(userId);
 
-  // التحقق من أن المستخدم لديه صلاحية للوصول للوحة التحكم
   useEffect(() => {
-    if (!loading && user && user.user_metadata?.role !== "admin" && user.user_metadata?.role !== "moderator") {
-      window.location.href = "/"; // منع الوصول لمن ليس مديرًا ولا مشرفًا
+    if (!loading && !profileLoading && profile) {
+      const role = profile.role;
+      if (role !== "admin" && role !== "moderator") {
+        window.location.href = "/";
+      }
     }
-  }, [user, loading]);
+  }, [profile, loading, profileLoading]);
 
   return (
     <ForumLayout session={session}>
@@ -50,4 +55,3 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
-

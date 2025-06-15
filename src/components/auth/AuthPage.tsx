@@ -75,21 +75,17 @@ const AuthPage = () => {
           </div>
           
           <h1 className="text-4xl font-bold text-gray-800 mb-4">شبكة الساحات</h1>
-          <h2 className="text-2xl text-green-700 mb-4">
-            للنقاش الإسلامي
-          </h2>
+          <h2 className="text-2xl text-green-700 mb-4">للنقاش الإسلامي الحر</h2>
           
-          <p className="text-lg text-gray-600 leading-relaxed">
-            مرحباً بك في منتدانا الإسلامي الهادف للنقاش البناء وتبادل العلم النافع
-          </p>
+          <p className="text-lg text-gray-600 leading-relaxed">يسعدنا انضمامك إلى منتدانا، حيث نلتقي لتبادل المعرفة والنقاش الراقي.</p>
           
           <div className="space-y-4 text-right">
             <div className="flex items-center justify-center md:justify-end gap-3">
-              <span className="text-gray-700">نقاشات علمية هادفة</span>
+              <span className="text-gray-700">نقاشات سياسية وفكرية علمية هادفة</span>
               <BookOpen className="w-5 h-5 text-green-600" />
             </div>
             <div className="flex items-center justify-center md:justify-end gap-3">
-              <span className="text-gray-700">مجتمع من المؤمنين</span>
+              <span className="text-gray-700">مجتمع هادف</span>
               <Users className="w-5 h-5 text-blue-600" />
             </div>
           </div>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -87,12 +86,13 @@ export default function FeedCommentSection({ topicId }: FeedCommentSectionProps)
       setComments(comments => [...comments, data]);
       setContent("");
       toast({ title: "تم إضافة تعليقك" });
-      if (!profiles[user.id] && user) {
+      if (!profiles[user.id]) {
+        // Fallback: just fill in the id, others as null
         const userProfile: Profile = {
           id: user.id,
-          display_name: user.display_name,
-          username: user.username,
-          avatar_url: user.avatar_url
+          display_name: null,
+          username: "",
+          avatar_url: null
         };
         setProfiles(prev => ({ ...prev, [user.id]: userProfile }));
       }

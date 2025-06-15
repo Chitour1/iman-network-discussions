@@ -1,4 +1,3 @@
-
 import ForumLayout from "@/components/forum/ForumLayout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -52,8 +51,8 @@ const AdminPermissions = () => {
     {
       id: "users",
       name: "الأعضاء",
-      role: "user",
-      members: users?.filter(u => u.role === "user") || [],
+      role: "member", // FIX here
+      members: users?.filter(u => u.role === "member") || [],
       permissions: [
         "كتابة مواضيع جديدة",
         "الرد على المشاركات",

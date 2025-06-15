@@ -1,4 +1,3 @@
-
 import ForumLayout from "@/components/forum/ForumLayout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -81,7 +80,7 @@ const AdminUsers = () => {
                         ? "مدير"
                         : user.role === "moderator"
                         ? "مشرف"
-                        : user.role === "user"
+                        : user.role === "member"
                         ? "عضو"
                         : user.role === "pending"
                         ? "بانتظار التفعيل"

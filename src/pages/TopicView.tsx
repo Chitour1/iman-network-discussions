@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +10,8 @@ import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import WysiwygEditor from "@/components/editor/WysiwygEditor";
+import ForumLayout from "@/components/forum/ForumLayout";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Topic {
   id: string;
@@ -45,8 +46,8 @@ const TopicView = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { session, user, loading: authLoading } = useAuth();
   const [topic, setTopic] = useState<Topic | null>(null);
-  const [user, setUser] = useState<any>(null);
   const [replies, setReplies] = useState<Reply[]>([]);
   const [newReply, setNewReply] = useState("");
   const [loading, setLoading] = useState(true);
@@ -61,18 +62,8 @@ const TopicView = () => {
     if (slug) {
       fetchTopic();
       fetchReplies();
-      fetchCurrentUser();
     }
   }, [slug]);
-
-  const fetchCurrentUser = async () => {
-    try {
-      const { data } = await supabase.auth.getUser();
-      setUser(data?.user || null);
-    } catch (e) {
-      setUser(null);
-    }
-  };
 
   const fetchTopic = async () => {
     try {
@@ -192,15 +183,14 @@ const TopicView = () => {
 
     setSubmitting(true);
     try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('يجب تسجيل الدخول أولاً');
+      if (!user) throw new Error('يجب تسجيل الدخول أولاً');
 
       const { error } = await supabase
         .from('comments')
         .insert({
           content: newReply,
           topic_id: topic.id,
-          author_id: user.user.id,
+          author_id: user.id,
           status: 'approved'
         });
 
@@ -274,9 +264,9 @@ const TopicView = () => {
     }
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50 p-6" dir="rtl">
+      <ForumLayout session={session}>
         <div className="max-w-4xl mx-auto">
           <div className="animate-pulse space-y-4">
             <div className="bg-white rounded-lg p-6 shadow-sm">
@@ -286,23 +276,23 @@ const TopicView = () => {
             </div>
           </div>
         </div>
-      </div>
+      </ForumLayout>
     );
   }
 
   if (!topic) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50 p-6" dir="rtl">
+      <ForumLayout session={session}>
         <div className="max-w-4xl mx-auto text-center py-12">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">الموضوع غير موجود</h2>
           <Button onClick={() => navigate('/')}>العودة للرئيسية</Button>
         </div>
-      </div>
+      </ForumLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50 p-6" dir="rtl">
+    <ForumLayout session={session}>
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between gap-4 mb-6">
@@ -497,7 +487,7 @@ const TopicView = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </ForumLayout>
   );
 };
 

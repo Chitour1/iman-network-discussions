@@ -1,4 +1,3 @@
-
 import { useState, useRef, useMemo } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -38,8 +37,17 @@ import {
   Minus,
   Hash,
   Settings,
-  EraseIcon as RemoveFormatting,
-  Table
+  Eraser as RemoveFormatting,
+  Table,
+  Subscript,
+  Superscript,
+  Copyright,
+  Trademark,
+  ArrowRight,
+  ArrowLeft,
+  PlayCircle,
+  Music,
+  FileText
 } from 'lucide-react';
 import EmojiPicker from './EmojiPicker';
 import ImageDialog from './ImageDialog';
@@ -81,6 +89,11 @@ const WysiwygEditor = ({
     toolbar: false, // We'll use custom toolbar
     clipboard: {
       matchVisual: false
+    },
+    history: {
+      delay: 1000,
+      maxStack: 50,
+      userOnly: false
     }
   }), []);
 
@@ -90,7 +103,8 @@ const WysiwygEditor = ({
     'align', 'direction',
     'list', 'bullet', 'indent',
     'link', 'image', 'video',
-    'blockquote', 'code-block', 'code'
+    'blockquote', 'code-block', 'code',
+    'script', 'clean'
   ];
 
   const getQuill = () => quillRef.current?.getEditor();
@@ -98,7 +112,12 @@ const WysiwygEditor = ({
   const handleFormat = (format: string, value?: any) => {
     const quill = getQuill();
     if (quill) {
-      quill.format(format, value);
+      if (value === undefined) {
+        const currentFormat = quill.getFormat();
+        quill.format(format, !currentFormat[format]);
+      } else {
+        quill.format(format, value);
+      }
     }
   };
 
@@ -170,14 +189,14 @@ const WysiwygEditor = ({
 
   const handleUndo = () => {
     const quill = getQuill();
-    if (quill) {
+    if (quill && quill.history) {
       quill.history.undo();
     }
   };
 
   const handleRedo = () => {
     const quill = getQuill();
-    if (quill) {
+    if (quill && quill.history) {
       quill.history.redo();
     }
   };
@@ -186,7 +205,7 @@ const WysiwygEditor = ({
     const quill = getQuill();
     if (quill) {
       const range = quill.getSelection();
-      if (range) {
+      if (range && range.length > 0) {
         quill.removeFormat(range.index, range.length);
       }
     }
@@ -199,6 +218,16 @@ const WysiwygEditor = ({
       if (range) {
         const delta = quill.clipboard.convert({ html: '<hr style="margin: 10px 0;">' });
         quill.updateContents(delta, 'user');
+      }
+    }
+  };
+
+  const insertSpecialChar = (char: string) => {
+    const quill = getQuill();
+    if (quill) {
+      const range = quill.getSelection();
+      if (range) {
+        quill.insertText(range.index, char);
       }
     }
   };
@@ -219,13 +248,97 @@ const WysiwygEditor = ({
     handleFormat('background', color);
   };
 
+  const handleHeaderChange = (level: string) => {
+    if (level === 'normal') {
+      handleFormat('header', false);
+    } else {
+      handleFormat('header', parseInt(level));
+    }
+  };
+
   return (
     <div className="border rounded-lg bg-white" dir="rtl">
       {/* Custom Toolbar */}
       <div className="border-b p-3 bg-gray-50">
         <div className="space-y-3">
           
-          {/* Row 1: Font and Text Formatting */}
+          {/* Row 1: Headers and Basic Text Formatting */}
+          <div className="flex flex-wrap gap-2 items-center">
+            {/* Headers */}
+            <Select onValueChange={handleHeaderChange}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="العنوان" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="normal">نص عادي</SelectItem>
+                <SelectItem value="1">عنوان كبير</SelectItem>
+                <SelectItem value="2">عنوان متوسط</SelectItem>
+                <SelectItem value="3">عنوان صغير</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Separator orientation="vertical" className="h-6" />
+
+            {/* Basic Formatting */}
+            <div className="flex gap-1">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleFormat('bold')}
+                title="غامق (Ctrl+B)"
+              >
+                <Bold className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleFormat('italic')}
+                title="مائل (Ctrl+I)"
+              >
+                <Italic className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleFormat('underline')}
+                title="تحته خط (Ctrl+U)"
+              >
+                <Underline className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleFormat('strike')}
+                title="يتوسطه خط"
+              >
+                <Strikethrough className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <Separator orientation="vertical" className="h-6" />
+
+            {/* Super/Subscript */}
+            <div className="flex gap-1">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleFormat('script', 'super')}
+                title="نص مرتفع"
+              >
+                <Superscript className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleFormat('script', 'sub')}
+                title="نص منخفض"
+              >
+                <Subscript className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Row 2: Font and Colors */}
           <div className="flex flex-wrap gap-2 items-center">
             {/* Font Selection */}
             <Select onValueChange={handleFontChange}>
@@ -238,6 +351,7 @@ const WysiwygEditor = ({
                 <SelectItem value="Times">Times</SelectItem>
                 <SelectItem value="Helvetica">Helvetica</SelectItem>
                 <SelectItem value="Georgia">Georgia</SelectItem>
+                <SelectItem value="Courier">Courier</SelectItem>
               </SelectContent>
             </Select>
 
@@ -269,47 +383,9 @@ const WysiwygEditor = ({
               className="w-8 h-8 border rounded cursor-pointer"
               onChange={(e) => handleBackgroundChange(e.target.value)}
             />
-
-            <Separator orientation="vertical" className="h-6" />
-
-            {/* Basic Formatting */}
-            <div className="flex gap-1">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleFormat('bold', true)}
-                title="غامق"
-              >
-                <Bold className="w-4 h-4" />
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleFormat('italic', true)}
-                title="مائل"
-              >
-                <Italic className="w-4 h-4" />
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleFormat('underline', true)}
-                title="تحته خط"
-              >
-                <Underline className="w-4 h-4" />
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleFormat('strike', true)}
-                title="يتوسطه خط"
-              >
-                <Strikethrough className="w-4 h-4" />
-              </Button>
-            </div>
           </div>
 
-          {/* Row 2: Alignment, Lists, and Insert Tools */}
+          {/* Row 3: Alignment and Direction */}
           <div className="flex flex-wrap gap-2 items-center">
             {/* Alignment */}
             <div className="flex gap-1">
@@ -368,10 +444,11 @@ const WysiwygEditor = ({
                 LTR
               </Button>
             </div>
+          </div>
 
-            <Separator orientation="vertical" className="h-6" />
-
-            {/* Lists and Indentation */}
+          {/* Row 4: Lists and Indentation */}
+          <div className="flex flex-wrap gap-2 items-center">
+            {/* Lists */}
             <div className="flex gap-1">
               <Button
                 size="sm"
@@ -389,6 +466,12 @@ const WysiwygEditor = ({
               >
                 <List className="w-4 h-4" />
               </Button>
+            </div>
+
+            <Separator orientation="vertical" className="h-6" />
+
+            {/* Indentation */}
+            <div className="flex gap-1">
               <Button
                 size="sm"
                 variant="outline"
@@ -406,16 +489,17 @@ const WysiwygEditor = ({
                 <Outdent className="w-4 h-4" />
               </Button>
             </div>
+          </div>
 
-            <Separator orientation="vertical" className="h-6" />
-
+          {/* Row 5: Insert Media and Links */}
+          <div className="flex flex-wrap gap-2 items-center">
             {/* Insert Tools */}
             <div className="flex gap-1">
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => setShowLinkDialog(true)}
-                title="إدراج رابط"
+                title="إدراج رابط (Ctrl+K)"
               >
                 <Link className="w-4 h-4" />
               </Button>
@@ -423,7 +507,7 @@ const WysiwygEditor = ({
                 size="sm"
                 variant="outline"
                 onClick={() => setShowImageDialog(true)}
-                title="إدراج صورة"
+                title="إدراج صورة من رابط"
               >
                 <Image className="w-4 h-4" />
               </Button>
@@ -431,7 +515,7 @@ const WysiwygEditor = ({
                 size="sm"
                 variant="outline"
                 onClick={() => setShowVideoDialog(true)}
-                title="إدراج فيديو"
+                title="إدراج فيديو مضمن"
               >
                 <Video className="w-4 h-4" />
               </Button>
@@ -444,16 +528,15 @@ const WysiwygEditor = ({
                 <Table className="w-4 h-4" />
               </Button>
             </div>
-          </div>
 
-          {/* Row 3: Special Content and Tools */}
-          <div className="flex flex-wrap gap-2 items-center">
+            <Separator orientation="vertical" className="h-6" />
+
             {/* Special Content */}
             <div className="flex gap-1">
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => handleFormat('blockquote', true)}
+                onClick={() => handleFormat('blockquote')}
                 title="اقتباس"
               >
                 <Quote className="w-4 h-4" />
@@ -461,7 +544,7 @@ const WysiwygEditor = ({
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => handleFormat('code-block', true)}
+                onClick={() => handleFormat('code-block')}
                 title="كود برمجي"
               >
                 <Code className="w-4 h-4" />
@@ -473,6 +556,45 @@ const WysiwygEditor = ({
                 title="خط فاصل أفقي"
               >
                 <Minus className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Row 6: Special Characters and Emojis */}
+          <div className="flex flex-wrap gap-2 items-center">
+            {/* Special Characters */}
+            <div className="flex gap-1">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => insertSpecialChar('©')}
+                title="رمز حقوق الطبع"
+              >
+                <Copyright className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => insertSpecialChar('™')}
+                title="رمز العلامة التجارية"
+              >
+                <Trademark className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => insertSpecialChar('←')}
+                title="سهم يسار"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => insertSpecialChar('→')}
+                title="سهم يمين"
+              >
+                <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
 
@@ -494,16 +616,17 @@ const WysiwygEditor = ({
                 </div>
               )}
             </div>
+          </div>
 
-            <Separator orientation="vertical" className="h-6" />
-
-            {/* History and Cleanup */}
+          {/* Row 7: History and Cleanup */}
+          <div className="flex flex-wrap gap-2 items-center">
+            {/* History */}
             <div className="flex gap-1">
               <Button
                 size="sm"
                 variant="outline"
                 onClick={handleUndo}
-                title="تراجع"
+                title="تراجع (Ctrl+Z)"
               >
                 <Undo className="w-4 h-4" />
               </Button>
@@ -511,7 +634,7 @@ const WysiwygEditor = ({
                 size="sm"
                 variant="outline"
                 onClick={handleRedo}
-                title="إعادة"
+                title="إعادة (Ctrl+Y)"
               >
                 <Redo className="w-4 h-4" />
               </Button>
@@ -533,7 +656,7 @@ const WysiwygEditor = ({
                 size="sm"
                 variant="outline"
                 onClick={() => setShowHtmlView(!showHtmlView)}
-                title="عرض HTML"
+                title={showHtmlView ? "عرض المحرر المرئي" : "عرض HTML"}
               >
                 <Code className="w-4 h-4" />
               </Button>
@@ -571,10 +694,11 @@ const WysiwygEditor = ({
             placeholder={placeholder}
             modules={modules}
             formats={formats}
-            className="h-[400px] rtl-editor"
+            className="h-[400px] rtl-editor [&_.ql-editor]:text-right [&_.ql-editor]:dir-rtl [&_.ql-editor]:font-arabic"
             style={{ 
               direction: 'rtl',
-              fontFamily: 'Arial, sans-serif'
+              fontFamily: 'Arial, sans-serif',
+              textAlign: 'right'
             }}
           />
         )}

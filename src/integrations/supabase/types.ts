@@ -122,27 +122,6 @@ export type Database = {
           },
         ]
       }
-      group_permissions: {
-        Row: {
-          enabled: boolean
-          group_role: Database["public"]["Enums"]["user_role"]
-          id: string
-          permission: Database["public"]["Enums"]["permission_key"]
-        }
-        Insert: {
-          enabled?: boolean
-          group_role: Database["public"]["Enums"]["user_role"]
-          id?: string
-          permission: Database["public"]["Enums"]["permission_key"]
-        }
-        Update: {
-          enabled?: boolean
-          group_role?: Database["public"]["Enums"]["user_role"]
-          id?: string
-          permission?: Database["public"]["Enums"]["permission_key"]
-        }
-        Relationships: []
-      }
       likes: {
         Row: {
           comment_id: string | null
@@ -332,45 +311,6 @@ export type Database = {
           },
         ]
       }
-      site_settings: {
-        Row: {
-          created_at: string | null
-          forum_description: string | null
-          forum_email: string | null
-          forum_language: string
-          forum_timezone: string
-          forum_title: string
-          id: string
-          seo_description: string | null
-          seo_keywords: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          forum_description?: string | null
-          forum_email?: string | null
-          forum_language?: string
-          forum_timezone?: string
-          forum_title: string
-          id?: string
-          seo_description?: string | null
-          seo_keywords?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          forum_description?: string | null
-          forum_email?: string | null
-          forum_language?: string
-          forum_timezone?: string
-          forum_title?: string
-          id?: string
-          seo_description?: string | null
-          seo_keywords?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       site_stats: {
         Row: {
           active_users: number | null
@@ -522,13 +462,6 @@ export type Database = {
     }
     Enums: {
       comment_status: "approved" | "pending" | "rejected"
-      permission_key:
-        | "delete_topic"
-        | "update_topic"
-        | "move_topic"
-        | "hide_topic"
-        | "pin_topic"
-        | "feature_topic"
       topic_status: "published" | "pending" | "rejected" | "archived"
       user_role: "admin" | "moderator" | "member" | "pending"
     }
@@ -647,14 +580,6 @@ export const Constants = {
   public: {
     Enums: {
       comment_status: ["approved", "pending", "rejected"],
-      permission_key: [
-        "delete_topic",
-        "update_topic",
-        "move_topic",
-        "hide_topic",
-        "pin_topic",
-        "feature_topic",
-      ],
       topic_status: ["published", "pending", "rejected", "archived"],
       user_role: ["admin", "moderator", "member", "pending"],
     },

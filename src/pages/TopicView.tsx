@@ -20,7 +20,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { useGroupPermissions, PermissionKey } from "@/hooks/useGroupPermissions";
 
 interface Topic {
   id: string;
@@ -30,7 +29,6 @@ interface Topic {
   reply_count: number;
   like_count: number;
   created_at: string;
-  updated_at: string | null;
   author_id: string;
   category_id: string;
   category_name: string;
@@ -72,9 +70,6 @@ const TopicView = () => {
     return savedSize ? parseInt(savedSize, 10) : 18; // text-lg is 18px
   });
 
-  // جلب صلاحيات المجموعة الخاصة بالمستخدم الحالي
-  const { data: groupPermissions } = useGroupPermissions();
-
   useEffect(() => {
     if (slug) {
       fetchTopic();
@@ -88,7 +83,7 @@ const TopicView = () => {
         .from('topics')
         .select(`
           id, title, content, view_count, reply_count, like_count,
-          created_at, updated_at, author_id, category_id
+          created_at, author_id, category_id
         `)
         .eq('slug', slug)
         .eq('status', 'published')
@@ -118,7 +113,6 @@ const TopicView = () => {
         reply_count: topicData.reply_count || 0,
         like_count: topicData.like_count || 0,
         created_at: topicData.created_at,
-        updated_at: topicData.updated_at,
         author_id: topicData.author_id,
         category_id: topicData.category_id,
         author_name: authorResult.data?.display_name || "مستخدم مجهول",
@@ -287,14 +281,6 @@ const TopicView = () => {
     }
   };
 
-  const can = (permission: PermissionKey): boolean => {
-    if (!groupPermissions || !user) return false;
-    // admin == كل شيء، أو تحقق فعلي من الجدول
-    return !!groupPermissions.find(
-      p => p.group_role === user.role && p.permission === permission && p.enabled
-    );
-  };
-
   if (loading || authLoading) {
     return (
       <ForumLayout session={session}>
@@ -450,11 +436,6 @@ const TopicView = () => {
                 dangerouslySetInnerHTML={{ __html: topic?.content || '' }}
                 dir="rtl"
               />
-              {topic?.updated_at && topic.updated_at !== topic.created_at && (
-                <div className="mt-2 text-xs text-yellow-600 font-semibold">
-                  تم تعديل هذا الموضوع مؤخرًا
-                </div>
-              )}
             </div>
             
             {/* Author Signature */}
@@ -475,29 +456,6 @@ const TopicView = () => {
                 <MessageSquare className="w-4 h-4" />
                 <span>{replies.length} رد</span>
               </div>
-              {/* أزرار الإدارة الديناميكية */}
-              {(can("delete_topic") || can("update_topic") || can("move_topic") || can("hide_topic") || can("pin_topic") || can("feature_topic")) && (
-                <div className="flex items-center gap-2 ml-2">
-                  {can("delete_topic") && (
-                    <Button variant="outline" size="sm" onClick={handleDelete}>حذف</Button>
-                  )}
-                  {can("update_topic") && (
-                    <Button variant="outline" size="sm" /*onClick={handleEdit}*/>تعديل</Button>
-                  )}
-                  {can("move_topic") && (
-                    <Button variant="outline" size="sm" /*onClick={handleMove}*/>نقل</Button>
-                  )}
-                  {can("hide_topic") && (
-                    <Button variant="outline" size="sm" /*onClick={handleHide}*/>إخفاء</Button>
-                  )}
-                  {can("pin_topic") && (
-                    <Button variant="outline" size="sm" /*onClick={handlePin}*/>تثبيت</Button>
-                  )}
-                  {can("feature_topic") && (
-                    <Button variant="outline" size="sm" /*onClick={handleFeature}*/>تمييز</Button>
-                  )}
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>

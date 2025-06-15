@@ -5,9 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 import ProfileCoverImage from "@/components/profile/ProfileCoverImage";
 import ProfileAvatar from "@/components/profile/ProfileAvatar";
 import { Button } from "@/components/ui/button";
-import FeedNewPostForm from "@/components/feed/FeedNewPostForm";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+
+const DEFAULT_COVER =
+  "https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?w=900&fit=cover";
 
 export default function ProfilePublic() {
   const { username } = useParams();
@@ -15,8 +17,19 @@ export default function ProfilePublic() {
   const [profile, setProfile] = useState<any>(null);
   const [topics, setTopics] = useState<any[]>([]);
   const [editMode, setEditMode] = useState(false);
-  const [coverUrl, setCoverUrl] = useState<string>("");
+  // Instead of coverUrl, we'll use a 'coverFromBio' - if not valid, fall back to default
   const [avatarUrl, setAvatarUrl] = useState<string>("");
+
+  // We'll allow saving a coverUrl in the beginning of the bio as "cover:URL\n..."
+  function parseCoverUrlFromBio(bio: string | null) {
+    if (!bio) return null;
+    const match = bio.match(/^cover:(https?:\/\/[^\s]+)\n?/);
+    return match ? match[1] : null;
+  }
+
+  const [bioValue, setBioValue] = useState(""); // bio + optional cover
+  const [avatarInput, setAvatarInput] = useState(""); // for editing avatar
+  const [coverInput, setCoverInput] = useState(""); // for editing cover
 
   useEffect(() => {
     async function fetchProfile() {
@@ -31,8 +44,10 @@ export default function ProfilePublic() {
         return;
       }
       setProfile(data);
-      setCoverUrl(data.cover_url || "");
       setAvatarUrl(data.avatar_url || "");
+      setBioValue(data.bio ?? "");
+      setAvatarInput(data.avatar_url || "");
+      setCoverInput(parseCoverUrlFromBio(data.bio) || "");
     }
 
     fetchProfile();
@@ -54,15 +69,20 @@ export default function ProfilePublic() {
 
   const isOwner = user && profile && user.id === profile.id;
 
-  // تعديل صورة الغلاف/الصورة الشخصية بالرابط فقط
-  async function handleSaveImages() {
-    const updates: any = {};
-    if (coverUrl !== (profile.cover_url || "")) updates.cover_url = coverUrl;
-    if (avatarUrl !== (profile.avatar_url || "")) updates.avatar_url = avatarUrl;
-    if (!Object.keys(updates).length) {
-      setEditMode(false);
-      return;
+  // تعديل صورة الغلاف/الصورة الشخصية بالرابط فقط (نحفظ الغلاف في أول سطر من bio كمؤقت)
+  async function handleSaveProfileImages() {
+    let bioToSave = bioValue;
+    // Attach/update the cover line at top of bio (cover:URL\n)
+    if (coverInput) {
+      // Remove any old cover:... lines
+      bioToSave = bioToSave.replace(/^cover:(https?:\/\/[^\s]+)\n?/, "");
+      bioToSave = `cover:${coverInput.trim()}\n${bioToSave}`.trim();
+    } else {
+      // Remove any old cover lines if input is empty
+      bioToSave = bioToSave.replace(/^cover:(https?:\/\/[^\s]+)\n?/, "");
     }
+    const updates: any = { bio: bioToSave };
+    if (avatarInput !== (profile.avatar_url || "")) updates.avatar_url = avatarInput;
     const { error } = await supabase
       .from("profiles")
       .update(updates)
@@ -70,8 +90,15 @@ export default function ProfilePublic() {
     if (error) {
       toast({ title: "خطأ", description: "تعذر حفظ التغييرات" });
     } else {
-      setProfile({ ...profile, ...updates });
       toast({ title: "تم التحديث بنجاح" });
+      setProfile({
+        ...profile,
+        ...updates,
+        avatar_url: updates.avatar_url ?? profile.avatar_url,
+        bio: bioToSave,
+      });
+      setBioValue(bioToSave);
+      setAvatarUrl(updates.avatar_url ?? profile.avatar_url);
       setEditMode(false);
     }
   }
@@ -84,18 +111,26 @@ export default function ProfilePublic() {
     );
   }
 
+  // Determine actual cover url (parsed from profile.bio or default)
+  const coverUrl = parseCoverUrlFromBio(profile.bio) || DEFAULT_COVER;
+
+  // When rendering, remove cover: line from bio
+  const bioWithoutCover = profile.bio
+    ? profile.bio.replace(/^cover:(https?:\/\/[^\s]+)\n?/, "")
+    : "";
+
   return (
     <div className="max-w-xl mx-auto bg-white rounded-xl shadow-lg mt-8 mb-10 overflow-hidden" dir="rtl">
       {/* صورة الغلاف */}
-      <ProfileCoverImage url={profile.cover_url} />
+      <ProfileCoverImage url={coverUrl} />
       <div className="p-4 pb-0">
         <div className="flex items-center">
           {/* الصورة الشخصية */}
-          <ProfileAvatar url={profile.avatar_url} size={96} />
+          <ProfileAvatar url={avatarUrl} size={96} />
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-gray-800">{profile.display_name || "عضو"}</h2>
             <div className="text-gray-500">@{profile.username}</div>
-            {profile.bio && <div className="mt-2">{profile.bio}</div>}
+            {bioWithoutCover && <div className="mt-2 whitespace-pre-wrap break-words">{bioWithoutCover}</div>}
           </div>
           {isOwner && (
             <Button size="sm" variant={editMode ? "secondary" : "outline"} className="ml-2" onClick={() => setEditMode(!editMode)}>
@@ -111,8 +146,8 @@ export default function ProfilePublic() {
                 type="text"
                 className="w-full border rounded px-2 py-1"
                 placeholder="https://image.url/cover.jpg"
-                value={coverUrl}
-                onChange={e => setCoverUrl(e.target.value)}
+                value={coverInput}
+                onChange={e => setCoverInput(e.target.value)}
                 dir="ltr"
               />
             </div>
@@ -122,13 +157,27 @@ export default function ProfilePublic() {
                 type="text"
                 className="w-full border rounded px-2 py-1"
                 placeholder="https://image.url/avatar.jpg"
-                value={avatarUrl}
-                onChange={e => setAvatarUrl(e.target.value)}
+                value={avatarInput}
+                onChange={e => setAvatarInput(e.target.value)}
                 dir="ltr"
               />
             </div>
-            <Button className="mt-1" onClick={handleSaveImages}>
-              حفظ الصور
+            <div>
+              <label className="block text-sm mb-1">نبذة تعريفية</label>
+              <textarea
+                className="w-full border rounded px-2 py-1"
+                placeholder="أدخل نبذة تعريفية"
+                value={bioValue.replace(/^cover:(https?:\/\/[^\s]+)\n?/, "")}
+                onChange={e => setBioValue(
+                  coverInput
+                    ? `cover:${coverInput.trim()}\n${e.target.value.replace(/^cover:(https?:\/\/[^\s]+)\n?/, "")}`
+                    : e.target.value.replace(/^cover:(https?:\/\/[^\s]+)\n?/, "")
+                )}
+                rows={3}
+              />
+            </div>
+            <Button className="mt-1" onClick={handleSaveProfileImages}>
+              حفظ الصور والمعلومات
             </Button>
           </div>
         )}

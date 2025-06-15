@@ -311,6 +311,45 @@ export type Database = {
           },
         ]
       }
+      site_settings: {
+        Row: {
+          created_at: string | null
+          forum_description: string | null
+          forum_email: string | null
+          forum_language: string
+          forum_timezone: string
+          forum_title: string
+          id: string
+          seo_description: string | null
+          seo_keywords: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          forum_description?: string | null
+          forum_email?: string | null
+          forum_language?: string
+          forum_timezone?: string
+          forum_title: string
+          id?: string
+          seo_description?: string | null
+          seo_keywords?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          forum_description?: string | null
+          forum_email?: string | null
+          forum_language?: string
+          forum_timezone?: string
+          forum_title?: string
+          id?: string
+          seo_description?: string | null
+          seo_keywords?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       site_stats: {
         Row: {
           active_users: number | null

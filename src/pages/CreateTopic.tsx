@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import CreateTopicForm from "@/components/forum/CreateTopicForm";
@@ -91,7 +90,7 @@ const CreateTopic = () => {
 
   return (
     <ForumLayout session={session}>
-      <div className="max-w-4xl mx-auto">
+      <div>
         <CreateTopicForm 
           categories={categories} 
           selectedCategoryId={categoryId || undefined}

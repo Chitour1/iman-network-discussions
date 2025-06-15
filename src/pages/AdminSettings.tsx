@@ -8,7 +8,7 @@ const AdminSettings = () => {
 
   return (
     <ForumLayout session={session}>
-      <div className="max-w-4xl mx-auto">
+      <div>
         <Card>
           <CardHeader>
             <CardTitle>إعدادات المنتدى</CardTitle>

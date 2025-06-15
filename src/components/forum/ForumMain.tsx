@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -227,22 +228,26 @@ const ForumMain = () => {
 
   const fetchCategories = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_categories_with_stats');
+      const {
+        data,
+        error
+      } = await supabase.from('categories').select('*').eq('is_active', true).order('sort_order');
+      if (error) throw error;
 
-      if (error) {
-        console.error('Error fetching categories via RPC:', error);
-        throw error;
-      }
-      
-      const categoriesData = (data || []).map((cat: any) => ({
-        ...cat,
-        topic_count: Number(cat.topic_count || 0),
-        comment_count: Number(cat.comment_count || 0),
-        view_count: Number(cat.view_count || 0),
-        recent_topics_count: Number(cat.recent_topics_count || 0),
+      const transformedData: Category[] = (data || []).map(cat => ({
+        id: cat.id,
+        name: cat.name,
+        slug: cat.slug,
+        description: cat.description || '',
+        color: cat.color || '#3B82F6',
+        icon: cat.icon || 'MessageSquare',
+        topic_count: cat.topic_count || 0,
+        comment_count: cat.post_count || 0,
+        view_count: cat.view_count || 0,
+        recent_topics_count: 0, // This data is not in the database yet
       }));
 
-      setCategories(categoriesData as Category[]);
+      setCategories(transformedData);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }

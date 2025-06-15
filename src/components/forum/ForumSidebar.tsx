@@ -81,21 +81,33 @@ const ForumSidebar = () => {
 
   const fetchCategoriesWithCounts = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_categories_with_stats');
+      const { data: cats, error } = await supabase
+        .from('categories')
+        .select('id, slug, name, color, icon, topic_count, view_count')
+        .eq('is_active', true)
+        .order('sort_order')
 
-      if (error) {
-        console.error('Error fetching categories with stats via RPC:', error);
-        throw error;
+      if (error) throw error;
+
+      const commentsCounts: { [key: string]: number } = {}
+      for (const cat of cats ?? []) {
+        const { count } = await supabase
+          .from('comments')
+          .select('*', { count: 'exact', head: true })
+          .in('topic_id',
+            (await supabase
+              .from('topics')
+              .select('id')
+              .eq('category_id', cat.id)
+            ).data?.map(t => t.id) || []
+          );
+        commentsCounts[cat.id] = count || 0;
       }
 
-      const categoriesData = (data || []).map((cat: any) => ({
-        ...cat,
-        topic_count: Number(cat.topic_count || 0),
-        comment_count: Number(cat.comment_count || 0),
-        view_count: Number(cat.view_count || 0),
-      }));
-      
-      setCategories(categoriesData as CategoryStat[]);
+      setCategories((cats ?? []).map(c => ({
+        ...c,
+        comment_count: commentsCounts[c.id] ?? 0
+      })));
     } catch (err) {
       console.error('Error fetching categories with counts:', err);
     }

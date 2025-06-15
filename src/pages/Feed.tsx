@@ -405,8 +405,19 @@ export default function Feed() {
                       )}
                       <span className="text-xs text-gray-400 ml-2">{new Date(topic.created_at).toLocaleDateString()}</span>
                     </div>
-                    {/* العنوان */}
-                    <div className="font-bold text-xl text-gray-800 mb-2">{topic.title}</div>
+                    {/* العنوان بشكل شبيه بنص المحتوى */}
+                    <div
+                      className="text-gray-600 mb-2 text-base font-normal overflow-y-auto"
+                      style={{
+                        whiteSpace: "pre-line",
+                        fontFamily: "inherit",
+                        maxHeight: "8em",
+                        wordBreak: "break-word",
+                        overflowX: "hidden",
+                      }}
+                    >
+                      {topic.title}
+                    </div>
                     {/* محتوى النص: راسي فقط, لا تمرير أفقي, نص عادي, الروابط مختصره */}
                     <div
                       className="text-gray-600 mb-2 text-base font-normal overflow-y-auto"

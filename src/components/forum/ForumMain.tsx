@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -19,6 +18,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { getContentPreview } from "@/utils/textUtils";
+import ForumCategoriesGrid from "./ForumCategoriesGrid";
 
 // Updated interface to match Supabase response
 interface Topic {
@@ -55,11 +55,13 @@ const ForumMain = () => {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [stats, setStats] = useState<ForumStats>({ totalTopics: 0, totalUsers: 0, onlineUsers: 0 });
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchTopics();
     fetchStats();
+    fetchCategories();
   }, []);
 
   const fetchStats = async () => {
@@ -165,6 +167,21 @@ const ForumMain = () => {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order');
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
+
   const handleCreateTopic = () => {
     navigate('/create-topic');
   };
@@ -193,6 +210,7 @@ const ForumMain = () => {
   return (
     <main className="flex-1 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card>
@@ -242,6 +260,11 @@ const ForumMain = () => {
             </p>
           </CardContent>
         </Card>
+
+        {/* Forum Categories Grid */}
+        {categories.length > 0 && (
+          <ForumCategoriesGrid categories={categories} />
+        )}
 
         {/* Topics List */}
         <div className="space-y-4">

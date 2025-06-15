@@ -38,6 +38,7 @@ interface Topic {
   author_avatar: string | null;
   author_bio: string | null;
   author_signature: string | null;
+  author_username: string;
 }
 
 interface Reply {
@@ -50,6 +51,7 @@ interface Reply {
   author_avatar: string | null;
   author_bio: string | null;
   author_signature: string | null;
+  author_username: string;
 }
 
 const TopicView = () => {
@@ -93,7 +95,7 @@ const TopicView = () => {
       const [authorResult, categoryResult] = await Promise.all([
         supabase
           .from('profiles')
-          .select('display_name, avatar_url, bio, signature')
+          .select('username, display_name, avatar_url, bio, signature')
           .eq('id', topicData.author_id)
           .single(),
         supabase
@@ -117,6 +119,7 @@ const TopicView = () => {
         author_avatar: authorResult.data?.avatar_url || null,
         author_bio: authorResult.data?.bio || null,
         author_signature: authorResult.data?.signature || null,
+        author_username: authorResult.data?.username || "",
         category_name: categoryResult.data?.name || "",
         category_color: categoryResult.data?.color || "#3B82F6",
         category_slug: categoryResult.data?.slug || "",
@@ -159,9 +162,10 @@ const TopicView = () => {
         const authorIds = commentsData?.map(c => c.author_id) || [];
         const uniqueAuthorIds = [...new Set(authorIds)];
 
+        // جلب username مع بيانات المؤلفين
         const { data: authors } = await supabase
           .from('profiles')
-          .select('id, display_name, avatar_url, bio, signature')
+          .select('id, username, display_name, avatar_url, bio, signature')
           .in('id', uniqueAuthorIds);
 
         const authorMap = new Map(authors?.map(a => [a.id, a]) || []);
@@ -177,7 +181,8 @@ const TopicView = () => {
             author_name: author?.display_name || "مستخدم مجهول",
             author_avatar: author?.avatar_url || null,
             author_bio: author?.bio || null,
-            author_signature: author?.signature || null
+            author_signature: author?.signature || null,
+            author_username: author?.username || "",
           };
         });
 
@@ -389,10 +394,10 @@ const TopicView = () => {
               </Avatar>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  {/* استخدم Link للتنقل الداخلي */}
-                  {topic?.author_name && topic?.author_id ? (
+                  {/* استخدم Link مع username */}
+                  {topic?.author_username ? (
                     <Link
-                      to={`/u/${encodeURIComponent(topic.author_name.replace(/\s/g, ""))}`}
+                      to={`/u/${encodeURIComponent(topic.author_username)}`}
                       className="font-medium text-gray-800 hover:text-green-700 transition-colors"
                       tabIndex={0}
                       aria-label={`ملف ${topic?.author_name}`}
@@ -471,10 +476,10 @@ const TopicView = () => {
                   </Avatar>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      {/* Link for reply author */}
-                      {reply.author_name && reply.author_id ? (
+                      {/* استخدم Link مع username للردود */}
+                      {reply.author_username ? (
                         <Link
-                          to={`/u/${encodeURIComponent(reply.author_name.replace(/\s/g, ""))}`}
+                          to={`/u/${encodeURIComponent(reply.author_username)}`}
                           className="font-medium text-gray-800 hover:text-green-700 transition-colors"
                           tabIndex={0}
                           aria-label={`ملف ${reply.author_name}`}

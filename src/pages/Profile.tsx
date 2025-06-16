@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, Mail, Calendar, MessageSquare, Eye, Settings, Save } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { User, Mail, Calendar, MessageSquare, Eye, Settings, Save, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -36,11 +38,22 @@ interface UserTopic {
   created_at: string;
   category_name: string;
   category_color: string;
+  is_feed_only: boolean;
+}
+
+interface UserComment {
+  id: string;
+  content: string;
+  created_at: string;
+  topic_title: string;
+  topic_slug: string;
+  is_feed_only: boolean;
 }
 
 const Profile = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [topics, setTopics] = useState<UserTopic[]>([]);
+  const [comments, setComments] = useState<UserComment[]>([]);
   const [editing, setEditing] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
@@ -53,6 +66,7 @@ const Profile = () => {
   useEffect(() => {
     fetchProfile();
     fetchUserTopics();
+    fetchUserComments();
   }, []);
 
   const fetchProfile = async () => {
@@ -113,7 +127,7 @@ const Profile = () => {
       const { data: topicsData, error } = await supabase
         .from('topics')
         .select(`
-          id, title, slug, view_count, reply_count, created_at, category_id
+          id, title, slug, view_count, reply_count, created_at, category_id, is_feed_only
         `)
         .eq('author_id', user.user.id)
         .eq('status', 'published')
@@ -143,7 +157,8 @@ const Profile = () => {
           reply_count: topic.reply_count || 0,
           created_at: topic.created_at,
           category_name: category?.name || "",
-          category_color: category?.color || "#3B82F6"
+          category_color: category?.color || "#3B82F6",
+          is_feed_only: topic.is_feed_only || false
         };
       });
 
@@ -152,6 +167,39 @@ const Profile = () => {
       console.error('Error fetching user topics:', error);
     } finally {
       setLoadingData(false);
+    }
+  };
+
+  const fetchUserComments = async () => {
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) return;
+
+      const { data: commentsData, error } = await supabase
+        .from('comments')
+        .select(`
+          id, content, created_at,
+          topics!inner(title, slug, is_feed_only)
+        `)
+        .eq('author_id', user.user.id)
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      const transformedComments: UserComment[] = (commentsData || []).map((comment: any) => ({
+        id: comment.id,
+        content: comment.content,
+        created_at: comment.created_at,
+        topic_title: comment.topics.title,
+        topic_slug: comment.topics.slug,
+        is_feed_only: comment.topics.is_feed_only || false
+      }));
+
+      setComments(transformedComments);
+    } catch (error) {
+      console.error('Error fetching user comments:', error);
     }
   };
 
@@ -355,62 +403,113 @@ const Profile = () => {
           </CardContent>
         </Card>
 
-        {/* User Topics */}
+        {/* User Activity Tabs */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MessageSquare className="w-5 h-5" />
-              مواضيعي الأخيرة
+              نشاطي
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {topics.length === 0 ? (
-              <div className="text-center py-8">
-                <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-600">لم تقم بكتابة أي مواضيع بعد</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {topics.map((topic) => (
-                  <div
-                    key={topic.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                    onClick={() => window.location.href = `/topic/${topic.slug}`}
-                  >
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-800 mb-1">{topic.title}</h4>
-                      <div className="flex items-center gap-3 text-sm text-gray-500">
-                        <Badge
-                          variant="secondary"
-                          style={{
-                            backgroundColor: `${topic.category_color}20`,
-                            color: topic.category_color
-                          }}
-                        >
-                          {topic.category_name}
-                        </Badge>
-                        <span>
-                          {formatDistanceToNow(new Date(topic.created_at), {
+            <Tabs defaultValue="topics" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="topics">مواضيعي ({profile.total_topics})</TabsTrigger>
+                <TabsTrigger value="comments">تعليقاتي ({profile.total_comments})</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="topics" className="mt-4">
+                {topics.length === 0 ? (
+                  <div className="text-center py-8">
+                    <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600">لم تقم بكتابة أي مواضيع بعد</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {topics.map((topic) => (
+                      <div
+                        key={topic.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                        onClick={() => window.location.href = `/topic/${topic.slug}`}
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-800 mb-1">{topic.title}</h4>
+                          <div className="flex items-center gap-3 text-sm text-gray-500">
+                            {topic.category_name && (
+                              <Badge
+                                variant="secondary"
+                                style={{
+                                  backgroundColor: `${topic.category_color}20`,
+                                  color: topic.category_color
+                                }}
+                              >
+                                {topic.category_name}
+                              </Badge>
+                            )}
+                            {topic.is_feed_only && (
+                              <Badge variant="outline">المنصة</Badge>
+                            )}
+                            <span>
+                              {formatDistanceToNow(new Date(topic.created_at), {
+                                addSuffix: true,
+                                locale: ar
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm text-gray-500">
+                          <div className="flex items-center gap-1">
+                            <Eye className="w-4 h-4" />
+                            <span>{topic.view_count}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <MessageSquare className="w-4 h-4" />
+                            <span>{topic.reply_count}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="comments" className="mt-4">
+                {comments.length === 0 ? (
+                  <div className="text-center py-8">
+                    <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600">لم تقم بكتابة أي تعليقات بعد</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {comments.map((comment) => (
+                      <div
+                        key={comment.id}
+                        className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                        onClick={() => window.location.href = `/topic/${comment.topic_slug}`}
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-sm font-medium text-gray-800">
+                            تعليق على: {comment.topic_title}
+                          </span>
+                          {comment.is_feed_only && (
+                            <Badge variant="outline" className="text-xs">المنصة</Badge>
+                          )}
+                        </div>
+                        <p className="text-gray-700 text-sm mb-2 line-clamp-2">
+                          {comment.content.replace(/<[^>]*>/g, '').substring(0, 150)}...
+                        </p>
+                        <span className="text-xs text-gray-500">
+                          {formatDistanceToNow(new Date(comment.created_at), {
                             addSuffix: true,
                             locale: ar
                           })}
                         </span>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Eye className="w-4 h-4" />
-                        <span>{topic.view_count}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <MessageSquare className="w-4 h-4" />
-                        <span>{topic.reply_count}</span>
-                      </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
+                )}
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>

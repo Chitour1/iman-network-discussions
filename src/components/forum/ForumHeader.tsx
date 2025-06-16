@@ -1,3 +1,4 @@
+
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -84,11 +85,13 @@ const ForumHeader = ({ session }: ForumHeaderProps) => {
                   navigate(`/u/${session.user.user_metadata?.username}`);
                 }}>
                   <User className="w-4 h-4 ml-2" />
-                  الملف الشخصي
+                  الملف الشخصي العام
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  navigate('/profile');
+                }}>
                   <Settings className="w-4 h-4 ml-2" />
-                  الإعدادات
+                  إعدادات الملف الشخصي
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="text-red-600">

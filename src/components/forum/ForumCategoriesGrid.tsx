@@ -16,8 +16,6 @@ import {
   Eye
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 
 interface Category {
   id: string;
@@ -55,19 +53,8 @@ type Props = {
 const ForumCategoriesGrid: React.FC<Props> = ({ categories }) => {
   const navigate = useNavigate();
 
-  // جلب الإحصائيات المحدثة من قاعدة البيانات
-  const { data: categoriesWithStats } = useQuery({
-    queryKey: ['categories-stats'],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_categories_with_stats');
-      if (error) throw error;
-      return data;
-    },
-    refetchInterval: 30000, // تحديث كل 30 ثانية
-  });
-
-  // دمج البيانات الأساسية مع الإحصائيات المحدثة
-  const categoriesData = categoriesWithStats || categories;
+  // Fetch category stats live instead of relying solely on passed props if needed
+  // Here, we assume the parent now provides fresh, real counts.
 
   return (
     <div className="my-8">
@@ -76,7 +63,7 @@ const ForumCategoriesGrid: React.FC<Props> = ({ categories }) => {
         أقسام المنتدى
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {categoriesData.map((cat) => {
+        {categories.map((cat) => {
           const Icon = iconMap[cat.icon] || MessageSquare;
           return (
             <div
@@ -125,5 +112,4 @@ const ForumCategoriesGrid: React.FC<Props> = ({ categories }) => {
     </div>
   );
 };
-
 export default ForumCategoriesGrid;

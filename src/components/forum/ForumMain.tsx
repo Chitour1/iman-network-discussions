@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import ForumCategoriesGrid from "./ForumCategoriesGrid";
 import { Topic, Category, ForumStatsData, TopMember, LatestMember } from "@/types/forum";
 import ForumWelcome from "./ForumWelcome";
-import NewsTicker from "./NewsTicker";
+import LatestTopics from "./LatestTopics";
 import TopicList from "./TopicList";
 import ForumStats from "./ForumStats";
 
@@ -21,10 +21,12 @@ const ForumMain = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [topMembers, setTopMembers] = useState<TopMember[]>([]);
   const [latestMember, setLatestMember] = useState<LatestMember | null>(null);
+  const [latestTopics, setLatestTopics] = useState<Topic[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchTopics();
+    fetchLatestTopics();
     fetchStats();
     fetchCategories();
     fetchTopMembers();
@@ -142,6 +144,87 @@ const ForumMain = () => {
     }
   };
 
+  const fetchLatestTopics = async () => {
+    try {
+      const {
+        data,
+        error
+      } = await supabase.from('topics').select(`
+            id,
+            title,
+            content,
+            view_count,
+            reply_count,
+            like_count,
+            is_pinned,
+            created_at,
+            author_id,
+            category_id,
+            slug,
+            profiles (display_name, username, avatar_url, bio),
+            categories (name, color)
+          `).eq('status', 'published').order('created_at', {
+        ascending: false
+      }).limit(10);
+      if (error) throw error;
+
+      // Map to the Topic interface
+      const transformedData: Topic[] = (data || []).map(item => {
+        // Extract profile info
+        let profiles: {
+          display_name: string;
+          username: string;
+          avatar_url: string | null;
+          bio: string | null;
+        } | null = null;
+        if (item.profiles && typeof item.profiles === 'object' && item.profiles !== null) {
+          const profileObj = item.profiles as any;
+          if ('display_name' in profileObj && 'username' in profileObj) {
+            profiles = {
+              display_name: profileObj.display_name as string,
+              username: profileObj.username as string,
+              avatar_url: profileObj.avatar_url as string | null,
+              bio: profileObj.bio as string | null
+            };
+          }
+        }
+
+        // Extract category info
+        let categories: {
+          name: string;
+          color: string;
+        } | null = null;
+        if (item.categories && typeof item.categories === 'object' && item.categories !== null) {
+          const categoryObj = item.categories as any;
+          if ('name' in categoryObj && 'color' in categoryObj) {
+            categories = {
+              name: categoryObj.name as string,
+              color: categoryObj.color as string
+            };
+          }
+        }
+        return {
+          id: item.id,
+          title: item.title,
+          content: item.content,
+          view_count: item.view_count || 0,
+          reply_count: item.reply_count || 0,
+          like_count: item.like_count || 0,
+          is_pinned: item.is_pinned || false,
+          created_at: item.created_at,
+          author_id: item.author_id,
+          category_id: item.category_id,
+          slug: item.slug,
+          profiles,
+          categories
+        };
+      });
+      setLatestTopics(transformedData);
+    } catch (error) {
+      console.error('Error fetching latest topics:', error);
+    }
+  };
+
   const fetchCategories = async () => {
     try {
       const {
@@ -160,7 +243,7 @@ const ForumMain = () => {
         topic_count: cat.topic_count || 0,
         comment_count: cat.post_count || 0,
         view_count: cat.view_count || 0,
-        recent_topics_count: 0,
+        recent_topics_count: 0, // This data is not in the database yet
       }));
 
       setCategories(transformedData);
@@ -248,8 +331,8 @@ const ForumMain = () => {
         {/* Welcome Message */}
         <ForumWelcome />
 
-        {/* شريط الأخبار المتحرك */}
-        <NewsTicker />
+        {/* آخر المواضيع (كاروسيل) */}
+        <LatestTopics topics={(latestTopics.length ? latestTopics : topics).slice(0, 10)} onTopicClick={handleTopicClick} />
 
         {/* Forum Categories Grid */}
         {categories.length > 0 && <ForumCategoriesGrid categories={categories} />}

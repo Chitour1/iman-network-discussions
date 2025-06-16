@@ -12,7 +12,6 @@ import { useToast } from "@/hooks/use-toast";
 import WysiwygEditor from "@/components/editor/WysiwygEditor";
 import ForumLayout from "@/components/forum/ForumLayout";
 import { useAuth } from "@/hooks/useAuth";
-import TopicAdminActions from "@/components/topic/TopicAdminActions";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -30,7 +29,6 @@ interface Topic {
   reply_count: number;
   like_count: number;
   created_at: string;
-  updated_at: string | null;
   author_id: string;
   category_id: string;
   category_name: string;
@@ -41,8 +39,6 @@ interface Topic {
   author_bio: string | null;
   author_signature: string | null;
   author_username: string;
-  is_pinned: boolean;
-  is_featured: boolean;
 }
 
 interface Reply {
@@ -87,7 +83,7 @@ const TopicView = () => {
         .from('topics')
         .select(`
           id, title, content, view_count, reply_count, like_count,
-          created_at, updated_at, author_id, category_id, is_pinned, is_featured
+          created_at, author_id, category_id
         `)
         .eq('slug', slug)
         .eq('status', 'published')
@@ -117,11 +113,8 @@ const TopicView = () => {
         reply_count: topicData.reply_count || 0,
         like_count: topicData.like_count || 0,
         created_at: topicData.created_at,
-        updated_at: topicData.updated_at,
         author_id: topicData.author_id,
         category_id: topicData.category_id,
-        is_pinned: topicData.is_pinned || false,
-        is_featured: topicData.is_featured || false,
         author_name: authorResult.data?.display_name || "مستخدم مجهول",
         author_avatar: authorResult.data?.avatar_url || null,
         author_bio: authorResult.data?.bio || null,
@@ -256,6 +249,38 @@ const TopicView = () => {
     localStorage.setItem('forum-font-size', clampedSize.toString());
   };
 
+  const canEdit = () => {
+    if (!topic || !user) return false;
+    if (user.id !== topic.author_id) return false;
+    // التعديل مسموح خلال ساعتين
+    const createdAt = new Date(topic.created_at);
+    return (Date.now() - createdAt.getTime()) < 2 * 60 * 60 * 1000;
+  };
+
+  const canDelete = () => {
+    if (!topic || !user) return false;
+    if (user.id !== topic.author_id) return false;
+    // الحذف مسموح خلال ساعة واحدة
+    const createdAt = new Date(topic.created_at);
+    return (Date.now() - createdAt.getTime()) < 1 * 60 * 60 * 1000;
+  };
+
+  const handleDelete = async () => {
+    if (!canDelete()) return;
+    if (!window.confirm("هل أنت متأكد أنك تريد حذف الموضوع؟ لا يمكن التراجع.")) return;
+    try {
+      const { error } = await supabase
+        .from('topics')
+        .delete()
+        .eq('id', topic?.id);
+      if (error) throw error;
+      toast({ title: "تم الحذف", description: "تم حذف الموضوع بنجاح" });
+      navigate('/');
+    } catch (e) {
+      toast({ title: "خطأ", description: "حدث خطأ أثناء الحذف", variant: "destructive" });
+    }
+  };
+
   if (loading || authLoading) {
     return (
       <ForumLayout session={session}>
@@ -316,16 +341,25 @@ const TopicView = () => {
           </BreadcrumbList>
         </Breadcrumb>
 
-        {/* إضافة زر التحكم بحجم الخط مع أزرار الإدارة */}
-        <div className="flex items-center justify-between gap-4 mb-6">
+        {/* حذف زر العودة القديم */}
+        {/* <div className="flex items-center justify-between gap-4 mb-6">
+          <Button variant="ghost" onClick={() => navigate('/')}>
+            <ArrowLeft className="w-4 h-4 ml-2" />
+            العودة
+          </Button>
           <div className="flex items-center gap-2">
-            <TopicAdminActions
-              topicId={topic.id}
-              isPinned={topic.is_pinned}
-              isFeatured={topic.is_featured}
-              currentCategoryId={topic.category_id}
-            />
+            <span className="text-sm text-gray-600">حجم الخط:</span>
+            <Button variant="outline" size="icon" className="w-8 h-8" onClick={() => handleFontSizeChange(contentFontSize + 1)}>
+              <Plus className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" size="icon" className="w-8 h-8" onClick={() => handleFontSizeChange(contentFontSize - 1)}>
+              <Minus className="w-4 h-4" />
+            </Button>
           </div>
+        </div> */}
+
+        {/* إضافة زر التحكم بحجم الخط فقط جهة اليمين */}
+        <div className="flex items-center justify-end gap-4 mb-6">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600">حجم الخط:</span>
             <Button variant="outline" size="icon" className="w-8 h-8" onClick={() => handleFontSizeChange(contentFontSize + 1)}>
@@ -347,16 +381,6 @@ const TopicView = () => {
               >
                 {topic?.category_name}
               </Badge>
-              {topic?.is_pinned && (
-                <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                  مثبت
-                </Badge>
-              )}
-              {topic?.is_featured && (
-                <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
-                  مميز
-                </Badge>
-              )}
             </div>
             <h1 className="text-2xl font-bold text-gray-800">{topic?.title}</h1>
             
@@ -412,11 +436,6 @@ const TopicView = () => {
                 dangerouslySetInnerHTML={{ __html: topic?.content || '' }}
                 dir="rtl"
               />
-              {topic?.updated_at && topic.updated_at !== topic.created_at && (
-                <div className="mt-2 text-xs text-yellow-600 font-semibold">
-                  تم تعديل هذا الموضوع مؤخرًا
-                </div>
-              )}
             </div>
             
             {/* Author Signature */}

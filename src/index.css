@@ -71,10 +71,10 @@
   }
 }
 
-/* News Ticker Animation */
+/* News Ticker Animation - من اليسار إلى اليمين */
 @keyframes marquee {
-  0% { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 .animate-marquee {

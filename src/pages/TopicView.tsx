@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import WysiwygEditor from "@/components/editor/WysiwygEditor";
 import ForumLayout from "@/components/forum/ForumLayout";
 import { useAuth } from "@/hooks/useAuth";
+import TopicAdminActions from "@/components/topic/TopicAdminActions";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -20,7 +21,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { useGroupPermissions, PermissionKey } from "@/hooks/useGroupPermissions";
 
 interface Topic {
   id: string;
@@ -41,6 +41,8 @@ interface Topic {
   author_bio: string | null;
   author_signature: string | null;
   author_username: string;
+  is_pinned: boolean;
+  is_featured: boolean;
 }
 
 interface Reply {
@@ -72,9 +74,6 @@ const TopicView = () => {
     return savedSize ? parseInt(savedSize, 10) : 18; // text-lg is 18px
   });
 
-  // جلب صلاحيات المجموعة الخاصة بالمستخدم الحالي
-  const { data: groupPermissions } = useGroupPermissions();
-
   useEffect(() => {
     if (slug) {
       fetchTopic();
@@ -88,7 +87,7 @@ const TopicView = () => {
         .from('topics')
         .select(`
           id, title, content, view_count, reply_count, like_count,
-          created_at, updated_at, author_id, category_id
+          created_at, updated_at, author_id, category_id, is_pinned, is_featured
         `)
         .eq('slug', slug)
         .eq('status', 'published')
@@ -121,6 +120,8 @@ const TopicView = () => {
         updated_at: topicData.updated_at,
         author_id: topicData.author_id,
         category_id: topicData.category_id,
+        is_pinned: topicData.is_pinned || false,
+        is_featured: topicData.is_featured || false,
         author_name: authorResult.data?.display_name || "مستخدم مجهول",
         author_avatar: authorResult.data?.avatar_url || null,
         author_bio: authorResult.data?.bio || null,
@@ -255,46 +256,6 @@ const TopicView = () => {
     localStorage.setItem('forum-font-size', clampedSize.toString());
   };
 
-  const canEdit = () => {
-    if (!topic || !user) return false;
-    if (user.id !== topic.author_id) return false;
-    // التعديل مسموح خلال ساعتين
-    const createdAt = new Date(topic.created_at);
-    return (Date.now() - createdAt.getTime()) < 2 * 60 * 60 * 1000;
-  };
-
-  const canDelete = () => {
-    if (!topic || !user) return false;
-    if (user.id !== topic.author_id) return false;
-    // الحذف مسموح خلال ساعة واحدة
-    const createdAt = new Date(topic.created_at);
-    return (Date.now() - createdAt.getTime()) < 1 * 60 * 60 * 1000;
-  };
-
-  const handleDelete = async () => {
-    if (!canDelete()) return;
-    if (!window.confirm("هل أنت متأكد أنك تريد حذف الموضوع؟ لا يمكن التراجع.")) return;
-    try {
-      const { error } = await supabase
-        .from('topics')
-        .delete()
-        .eq('id', topic?.id);
-      if (error) throw error;
-      toast({ title: "تم الحذف", description: "تم حذف الموضوع بنجاح" });
-      navigate('/');
-    } catch (e) {
-      toast({ title: "خطأ", description: "حدث خطأ أثناء الحذف", variant: "destructive" });
-    }
-  };
-
-  const can = (permission: PermissionKey): boolean => {
-    if (!groupPermissions || !user) return false;
-    // admin == كل شيء، أو تحقق فعلي من الجدول
-    return !!groupPermissions.find(
-      p => p.group_role === user.role && p.permission === permission && p.enabled
-    );
-  };
-
   if (loading || authLoading) {
     return (
       <ForumLayout session={session}>
@@ -355,25 +316,16 @@ const TopicView = () => {
           </BreadcrumbList>
         </Breadcrumb>
 
-        {/* حذف زر العودة القديم */}
-        {/* <div className="flex items-center justify-between gap-4 mb-6">
-          <Button variant="ghost" onClick={() => navigate('/')}>
-            <ArrowLeft className="w-4 h-4 ml-2" />
-            العودة
-          </Button>
+        {/* إضافة زر التحكم بحجم الخط مع أزرار الإدارة */}
+        <div className="flex items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">حجم الخط:</span>
-            <Button variant="outline" size="icon" className="w-8 h-8" onClick={() => handleFontSizeChange(contentFontSize + 1)}>
-              <Plus className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="icon" className="w-8 h-8" onClick={() => handleFontSizeChange(contentFontSize - 1)}>
-              <Minus className="w-4 h-4" />
-            </Button>
+            <TopicAdminActions
+              topicId={topic.id}
+              isPinned={topic.is_pinned}
+              isFeatured={topic.is_featured}
+              currentCategoryId={topic.category_id}
+            />
           </div>
-        </div> */}
-
-        {/* إضافة زر التحكم بحجم الخط فقط جهة اليمين */}
-        <div className="flex items-center justify-end gap-4 mb-6">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600">حجم الخط:</span>
             <Button variant="outline" size="icon" className="w-8 h-8" onClick={() => handleFontSizeChange(contentFontSize + 1)}>
@@ -395,6 +347,16 @@ const TopicView = () => {
               >
                 {topic?.category_name}
               </Badge>
+              {topic?.is_pinned && (
+                <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                  مثبت
+                </Badge>
+              )}
+              {topic?.is_featured && (
+                <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
+                  مميز
+                </Badge>
+              )}
             </div>
             <h1 className="text-2xl font-bold text-gray-800">{topic?.title}</h1>
             
@@ -475,29 +437,6 @@ const TopicView = () => {
                 <MessageSquare className="w-4 h-4" />
                 <span>{replies.length} رد</span>
               </div>
-              {/* أزرار الإدارة الديناميكية */}
-              {(can("delete_topic") || can("update_topic") || can("move_topic") || can("hide_topic") || can("pin_topic") || can("feature_topic")) && (
-                <div className="flex items-center gap-2 ml-2">
-                  {can("delete_topic") && (
-                    <Button variant="outline" size="sm" onClick={handleDelete}>حذف</Button>
-                  )}
-                  {can("update_topic") && (
-                    <Button variant="outline" size="sm" /*onClick={handleEdit}*/>تعديل</Button>
-                  )}
-                  {can("move_topic") && (
-                    <Button variant="outline" size="sm" /*onClick={handleMove}*/>نقل</Button>
-                  )}
-                  {can("hide_topic") && (
-                    <Button variant="outline" size="sm" /*onClick={handleHide}*/>إخفاء</Button>
-                  )}
-                  {can("pin_topic") && (
-                    <Button variant="outline" size="sm" /*onClick={handlePin}*/>تثبيت</Button>
-                  )}
-                  {can("feature_topic") && (
-                    <Button variant="outline" size="sm" /*onClick={handleFeature}*/>تمييز</Button>
-                  )}
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>

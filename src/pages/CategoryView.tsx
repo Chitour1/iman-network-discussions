@@ -18,6 +18,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import TopicAdminActions from "@/components/topic/TopicAdminActions";
 
 interface Category {
   id: string;
@@ -35,6 +36,7 @@ interface Topic {
   reply_count: number;
   like_count: number;
   is_pinned: boolean;
+  is_featured: boolean;
   created_at: string;
   slug: string;
   author_name: string;
@@ -85,7 +87,7 @@ const CategoryView = () => {
           .from('topics')
           .select(`
             id, title, content, view_count, reply_count, like_count,
-            is_pinned, created_at, slug, author_id
+            is_pinned, is_featured, created_at, slug, author_id
           `)
           .eq('category_id', categoryData.id)
           .eq('status', 'published')
@@ -113,6 +115,7 @@ const CategoryView = () => {
           reply_count: topic.reply_count || 0,
           like_count: topic.like_count || 0,
           is_pinned: topic.is_pinned || false,
+          is_featured: topic.is_featured || false,
           created_at: topic.created_at,
           slug: topic.slug,
           author_name: authorMap.get(topic.author_id) || "مستخدم مجهول"
@@ -228,14 +231,28 @@ const CategoryView = () => {
                               مثبت
                             </Badge>
                           )}
+                          {topic.is_featured && (
+                            <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
+                              مميز
+                            </Badge>
+                          )}
                         </div>
                         
-                        <h3 
-                          className="text-lg font-semibold text-gray-800 mb-2 hover:text-green-600 cursor-pointer"
-                          onClick={() => handleTopicClick(topic.slug)}
-                        >
-                          {topic.title}
-                        </h3>
+                        <div className="flex items-center justify-between">
+                          <h3 
+                            className="text-lg font-semibold text-gray-800 mb-2 hover:text-green-600 cursor-pointer flex-1"
+                            onClick={() => handleTopicClick(topic.slug)}
+                          >
+                            {topic.title}
+                          </h3>
+                          
+                          <TopicAdminActions
+                            topicId={topic.id}
+                            isPinned={topic.is_pinned}
+                            isFeatured={topic.is_featured || false}
+                            currentCategoryId={category.id}
+                          />
+                        </div>
                         
                         <p className="text-gray-600 mb-3 line-clamp-2">
                           {getContentPreview(topic.content, 150)}

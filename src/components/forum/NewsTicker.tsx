@@ -22,11 +22,11 @@ const NewsTicker = () => {
     try {
       console.log("جاري جلب الأخبار...");
       
-      // البحث عن قسم الأخبار
+      // البحث عن قسم الأخبار باستخدام slug الصحيح
       const { data: newsCategory, error: categoryError } = await supabase
         .from('categories')
         .select('id, name')
-        .eq('slug', 'news')
+        .eq('slug', 'news-forum')
         .single();
 
       console.log("قسم الأخبار:", newsCategory);
@@ -47,27 +47,6 @@ const NewsTicker = () => {
         if (topics && topics.length > 0) {
           setNewsItems(topics);
         }
-      } else {
-        console.log("قسم الأخبار غير موجود، سيتم إنشاؤه...");
-        // إنشاء قسم الأخبار إذا لم يكن موجوداً
-        const { data: newCategory, error: createError } = await supabase
-          .from('categories')
-          .insert({
-            name: 'الأخبار',
-            slug: 'news',
-            description: 'قسم الأخبار والمستجدات',
-            color: '#DC2626',
-            icon: 'Newspaper',
-            is_active: true,
-            sort_order: 1
-          })
-          .select()
-          .single();
-
-        console.log("تم إنشاء قسم الأخبار:", newCategory);
-        if (createError) {
-          console.error("خطأ في إنشاء قسم الأخبار:", createError);
-        }
       }
     } catch (error) {
       console.error('خطأ في جلب الأخبار:', error);
@@ -75,6 +54,23 @@ const NewsTicker = () => {
       setLoading(false);
     }
   };
+
+  // حذف القسم المكرر
+  const deleteOldNewsCategory = async () => {
+    try {
+      await supabase
+        .from('categories')
+        .delete()
+        .eq('slug', 'news');
+      console.log("تم حذف القسم المكرر");
+    } catch (error) {
+      console.error("خطأ في حذف القسم المكرر:", error);
+    }
+  };
+
+  useEffect(() => {
+    deleteOldNewsCategory();
+  }, []);
 
   // عرض شريط الأخبار حتى لو لم تكن هناك أخبار
   return (
@@ -107,7 +103,7 @@ const NewsTicker = () => {
             ))}
           </div>
         ) : (
-          <div className="px-8 text-sm">لا توجد أخبار حالياً - يمكنك إضافة مواضيع في قسم الأخبار</div>
+          <div className="px-8 text-sm">لا توجد أخبار حالياً - يمكنك إضافة مواضيع في منتدى الأخبار</div>
         )}
       </div>
     </div>

@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -98,7 +99,7 @@ const AdminUserEditDialog: React.FC<AdminUserEditDialogProps> = ({ open, onOpenC
               <label className="block font-bold mb-1">الدور:</label>
               <select
                 value={role}
-                onChange={e => setRole(e.target.value as "admin" | "moderator" | "member" | "pending")}
+                onChange={e => setRole(e.target.value)}
                 className="w-full px-3 py-2 border rounded"
               >
                 {roles.map(r => (

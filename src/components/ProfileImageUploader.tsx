@@ -1,8 +1,10 @@
 
 import React, { useRef, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Loader2, UploadCloud } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Loader2, UploadCloud, Link } from "lucide-react";
 
 interface ProfileImageUploaderProps {
   bucket: "avatars" | "covers";
@@ -22,58 +24,35 @@ const ProfileImageUploader = ({
   label = "تغيير الصورة",
 }: ProfileImageUploaderProps) => {
   const [loading, setLoading] = useState(false);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [imageUrl, setImageUrl] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    const file = files[0];
-    if (file.size > 5 * 1024 * 1024) {
-      alert("الملف كبير جدًا (الحد الأقصى 5MB)");
-      return;
-    }
+  const handleUrlSubmit = () => {
+    if (!imageUrl.trim()) return;
+    
     setLoading(true);
-
-    // توليد مسار فريد للصورة
-    const ext = file.name.split(".").pop();
-    const filePath = `${userId}/${bucket}_${Date.now()}.${ext}`;
-
-    // ارفع للصندوق المطلوب
-    const { error: uploadError } = await supabase.storage
-      .from(bucket)
-      .upload(filePath, file, { upsert: true });
-
-    if (uploadError) {
-      alert("حدث خطأ أثناء رفع الصورة");
+    // التحقق من صحة الرابط
+    const img = new Image();
+    img.onload = () => {
+      onChange(imageUrl);
+      setImageUrl("");
+      setDialogOpen(false);
       setLoading(false);
-      return;
-    }
-
-    // احصل على الرابط العلني
-    const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
-    if (data.publicUrl) {
-      onChange(data.publicUrl); // حدّث رابط الصورة في الأعلى
-    }
-    setLoading(false);
+    };
+    img.onerror = () => {
+      alert("الرابط غير صحيح أو الصورة غير متاحة");
+      setLoading(false);
+    };
+    img.src = imageUrl;
   };
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <input
-        type="file"
-        accept="image/*"
-        ref={inputRef}
-        className="hidden"
-        onChange={handleFileChange}
-        disabled={loading}
-      />
       <div 
         className={`relative ${rounded ? "rounded-full" : "rounded-lg"} overflow-hidden border ${bucket === "covers" ? "w-full h-32 md:h-40" : "w-24 h-24"} bg-gray-200 flex items-center justify-center`}
         style={bucket === "covers" ? {width: "100%"} : {}}
       >
         {url ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={url}
             alt="profile/cover"
@@ -90,16 +69,63 @@ const ProfileImageUploader = ({
           </div>
         )}
       </div>
-      <Button
-        type="button"
-        size="sm"
-        className="mt-0"
-        onClick={() => inputRef.current?.click()}
-        disabled={loading}
-        variant="outline"
-      >
-        {label}
-      </Button>
+      
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogTrigger asChild>
+          <Button
+            type="button"
+            size="sm"
+            className="mt-0"
+            disabled={loading}
+            variant="outline"
+          >
+            <Link className="w-4 h-4 ml-2" />
+            {label}
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>{label}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="imageUrl">رابط الصورة *</Label>
+              <Input
+                id="imageUrl"
+                type="url"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="https://example.com/image.jpg"
+                dir="ltr"
+              />
+            </div>
+            {imageUrl && (
+              <div>
+                <Label>معاينة الصورة:</Label>
+                <div className="mt-2 border rounded-lg p-2">
+                  <img 
+                    src={imageUrl} 
+                    alt="معاينة" 
+                    className="max-w-full h-32 mx-auto object-contain rounded"
+                    onError={(e) => {
+                      e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEyOCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPtrYp9mN2LHYqSDYutmK2LEg2LXYp9mE2K3YqTwvdGV4dD48L3N2Zz4=';
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleUrlSubmit} disabled={!imageUrl.trim() || loading}>
+                {loading ? <Loader2 className="animate-spin w-4 h-4 ml-2" /> : null}
+                حفظ الصورة
+              </Button>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                إلغاء
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

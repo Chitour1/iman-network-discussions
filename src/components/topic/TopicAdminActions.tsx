@@ -18,7 +18,7 @@ interface TopicAdminActionsProps {
 }
 
 const TopicAdminActions = ({ topicId, isPinned, isFeatured, currentCategoryId }: TopicAdminActionsProps) => {
-  const { data: permissions } = useUserPermissions();
+  const { data: permissions, isLoading } = useUserPermissions();
   const { pinTopic, featureTopic, hideTopic, moveTopic, deleteTopic } = useTopicActions();
   const [showMoveDialog, setShowMoveDialog] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
@@ -36,7 +36,10 @@ const TopicAdminActions = ({ topicId, isPinned, isFeatured, currentCategoryId }:
     },
   });
 
-  const hasAnyPermission = permissions && (
+  // Don't show anything while loading or if no permissions
+  if (isLoading || !permissions) return null;
+
+  const hasAnyPermission = (
     permissions.pin_topic ||
     permissions.feature_topic ||
     permissions.hide_topic ||
@@ -64,7 +67,7 @@ const TopicAdminActions = ({ topicId, isPinned, isFeatured, currentCategoryId }:
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-[180px]">
-          {permissions?.pin_topic && (
+          {permissions.pin_topic && (
             <DropdownMenuItem
               onClick={() => pinTopic.mutate({ topicId, isPinned: !isPinned })}
               disabled={pinTopic.isPending}
@@ -74,7 +77,7 @@ const TopicAdminActions = ({ topicId, isPinned, isFeatured, currentCategoryId }:
             </DropdownMenuItem>
           )}
           
-          {permissions?.feature_topic && (
+          {permissions.feature_topic && (
             <DropdownMenuItem
               onClick={() => featureTopic.mutate({ topicId, isFeatured: !isFeatured })}
               disabled={featureTopic.isPending}
@@ -84,14 +87,14 @@ const TopicAdminActions = ({ topicId, isPinned, isFeatured, currentCategoryId }:
             </DropdownMenuItem>
           )}
 
-          {permissions?.move_topic && (
+          {permissions.move_topic && (
             <DropdownMenuItem onClick={() => setShowMoveDialog(true)}>
               <Move className="w-4 h-4 ml-2" />
               نقل إلى قسم آخر
             </DropdownMenuItem>
           )}
 
-          {permissions?.hide_topic && (
+          {permissions.hide_topic && (
             <DropdownMenuItem
               onClick={() => hideTopic.mutate({ topicId })}
               disabled={hideTopic.isPending}
@@ -101,7 +104,7 @@ const TopicAdminActions = ({ topicId, isPinned, isFeatured, currentCategoryId }:
             </DropdownMenuItem>
           )}
 
-          {permissions?.delete_topic && (
+          {permissions.delete_topic && (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem

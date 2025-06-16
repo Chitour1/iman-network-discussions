@@ -44,7 +44,7 @@ export const useTopicActions = () => {
     mutationFn: async ({ topicId }: { topicId: string }) => {
       const { error } = await supabase
         .from("topics")
-        .update({ status: "hidden" })
+        .update({ status: "archived" })
         .eq("id", topicId);
       if (error) throw error;
     },

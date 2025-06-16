@@ -214,6 +214,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          allow_private_messages: boolean | null
           avatar_url: string | null
           ban_expires_at: string | null
           ban_reason: string | null
@@ -221,19 +222,31 @@ export type Database = {
           cover_url: string | null
           created_at: string | null
           display_name: string | null
+          email_notifications: boolean | null
           id: string
+          interests: string | null
           is_banned: boolean | null
           is_verified: boolean | null
           joined_at: string | null
+          language: string | null
           last_seen_at: string | null
+          notify_on_mention: boolean | null
+          notify_on_message: boolean | null
+          notify_on_reply: boolean | null
           post_count: number | null
+          profile_visibility: string | null
           reputation_score: number | null
           role: Database["public"]["Enums"]["user_role"] | null
+          show_email: boolean | null
+          show_online_status: boolean | null
           signature: string | null
+          timezone: string | null
           updated_at: string | null
           username: string
+          website: string | null
         }
         Insert: {
+          allow_private_messages?: boolean | null
           avatar_url?: string | null
           ban_expires_at?: string | null
           ban_reason?: string | null
@@ -241,19 +254,31 @@ export type Database = {
           cover_url?: string | null
           created_at?: string | null
           display_name?: string | null
+          email_notifications?: boolean | null
           id: string
+          interests?: string | null
           is_banned?: boolean | null
           is_verified?: boolean | null
           joined_at?: string | null
+          language?: string | null
           last_seen_at?: string | null
+          notify_on_mention?: boolean | null
+          notify_on_message?: boolean | null
+          notify_on_reply?: boolean | null
           post_count?: number | null
+          profile_visibility?: string | null
           reputation_score?: number | null
           role?: Database["public"]["Enums"]["user_role"] | null
+          show_email?: boolean | null
+          show_online_status?: boolean | null
           signature?: string | null
+          timezone?: string | null
           updated_at?: string | null
           username: string
+          website?: string | null
         }
         Update: {
+          allow_private_messages?: boolean | null
           avatar_url?: string | null
           ban_expires_at?: string | null
           ban_reason?: string | null
@@ -261,17 +286,28 @@ export type Database = {
           cover_url?: string | null
           created_at?: string | null
           display_name?: string | null
+          email_notifications?: boolean | null
           id?: string
+          interests?: string | null
           is_banned?: boolean | null
           is_verified?: boolean | null
           joined_at?: string | null
+          language?: string | null
           last_seen_at?: string | null
+          notify_on_mention?: boolean | null
+          notify_on_message?: boolean | null
+          notify_on_reply?: boolean | null
           post_count?: number | null
+          profile_visibility?: string | null
           reputation_score?: number | null
           role?: Database["public"]["Enums"]["user_role"] | null
+          show_email?: boolean | null
+          show_online_status?: boolean | null
           signature?: string | null
+          timezone?: string | null
           updated_at?: string | null
           username?: string
+          website?: string | null
         }
         Relationships: []
       }

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -137,19 +138,12 @@ export default function UserProfile() {
           .eq("author_id", data.id)
           .eq("status", "approved");
 
-        // Get user email from auth if viewing own profile
-        let userEmail = null;
-        if (currentUser && data.id === currentUser.id) {
-          userEmail = currentUser.email;
-        }
-
         const profileData: ProfileData = {
           ...data,
-          email: userEmail,
           total_topics: topicCount || 0,
           total_comments: commentCount || 0,
           is_online: data.last_seen_at ? new Date(data.last_seen_at) > new Date(Date.now() - 15 * 60 * 1000) : false,
-          // Set default values for new fields that might be null
+          // Set default values for new fields
           website: data.website || "",
           interests: data.interests || "",
           signature: data.signature || "",
@@ -214,11 +208,10 @@ export default function UserProfile() {
 
       const profileData: ProfileData = {
         ...data,
-        email: currentUser.email || null,
         total_topics: topicCount || 0,
         total_comments: commentCount || 0,
         is_online: true,
-        // Set default values for new fields that might be null
+        // Set default values for new fields
         website: data.website || "",
         interests: data.interests || "",
         signature: data.signature || "",
@@ -692,7 +685,7 @@ export default function UserProfile() {
           </CardHeader>
           <CardContent>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className={`grid w-full ${isOwnProfile ? "grid-cols-5" : "grid-cols-3"}`}>
+              <TabsList className={`grid w-full ${isOwnProfile ? "grid-cols-5" : "grid-cols-2"}`}>
                 <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
                 <TabsTrigger value="topics">المواضيع ({profile.total_topics})</TabsTrigger>
                 <TabsTrigger value="comments">التعليقات ({profile.total_comments})</TabsTrigger>

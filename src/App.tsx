@@ -1,4 +1,3 @@
-
 import React, { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -11,13 +10,16 @@ import Index from "./pages/Index";
 import CreateTopic from "./pages/CreateTopic";
 import TopicView from "./pages/TopicView";
 import CategoryView from "./pages/CategoryView";
-import UserProfile from "./pages/UserProfile";
+import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminSettings from "./pages/AdminSettings";
 import NotFound from "./pages/NotFound";
 import AdminCategories from "./pages/AdminCategories";
 import AdminUsers from "./pages/AdminUsers";
 import AdminPermissions from "./pages/AdminPermissions";
+
+// Lazy load the user profile page
+const UserProfilePage = lazy(() => import("./pages/user/[username].tsx"));
 
 const queryClient = new QueryClient();
 
@@ -46,13 +48,13 @@ const App = () => (
                   <Route path="/create-topic" element={<CreateTopic />} />
                   <Route path="/topic/:slug" element={<TopicView />} />
                   <Route path="/category/:slug" element={<CategoryView />} />
-                  <Route path="/profile" element={<UserProfile />} />
-                  <Route path="/u/:username" element={<UserProfile />} />
+                  <Route path="/profile" element={<Profile />} />
                   <Route path="/admin" element={<AdminDashboard />} />
                   <Route path="/admin/settings" element={<AdminSettings />} />
                   <Route path="/admin/categories" element={<AdminCategories />} />
                   <Route path="/admin/users" element={<AdminUsers />} />
                   <Route path="/admin/permissions" element={<AdminPermissions />} />
+                  <Route path="/u/:username" element={<UserProfilePage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
